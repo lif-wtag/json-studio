@@ -60,6 +60,12 @@ public enum ParseErrorCopy {
                 "Follow it with a \\uDC00–\\uDFFF escape, or write the character directly."
             )
 
+        case .invalidEscape:
+            return (
+                "Remove this backslash, or finish the escape.",
+                "\\\(c.found ?? "?") isn't a JSON escape. The valid ones are \\\" \\\\ \\/ \\b \\f \\n \\r \\t and \\uXXXX."
+            )
+
         case .missingClosingBrace:
             return (
                 "This object never closes.",

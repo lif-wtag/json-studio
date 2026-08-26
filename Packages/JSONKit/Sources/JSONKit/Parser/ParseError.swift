@@ -14,8 +14,9 @@
 /// transcribed verbatim from `Design/error-copy.md`.
 public struct ParseError: Sendable, Equatable, Error {
 
-    /// The twelve errors from `Design/error-copy.md`. Adding a thirteenth is a design change:
-    /// add the copy there first, then the case here.
+    /// The thirteen errors from `Design/error-copy.md`. Adding a fourteenth is a design change:
+    /// add the copy there first, then the case here — which is exactly how `invalidEscape` got
+    /// added when the tokenizer revealed the original twelve had no message for `\x`.
     public enum Kind: String, Sendable, CaseIterable {
         case missingComma
         case trailingComma
@@ -23,6 +24,9 @@ public struct ParseError: Sendable, Equatable, Error {
         case controlCharacterInString
         case invalidUnicodeEscape
         case loneSurrogate
+        /// An unknown escape such as `\\x`. Distinct from `invalidUnicodeEscape`, which is
+        /// specifically a malformed `\\u` — the fixes differ.
+        case invalidEscape
         case missingClosingBrace
         case missingClosingBracket
         case missingColon
