@@ -4,8 +4,8 @@ import SwiftUI
 ///
 /// Values come from the approved Claude Design project ("JSON Studio — Run 1"), reconciled in
 /// `Design/tokens.md`, which is the specification and wins on any disagreement. Per locked
-/// decision #9, literal hex survives ONLY in `SyntaxTheme.swift` — every colour here resolves to
-/// an AppKit semantic.
+/// decision #9, literal hex survives ONLY in `SyntaxTheme.swift` — the syntax palette, the six
+/// semantics, and the editor ground (ADR-10). Every colour here resolves to an AppKit semantic.
 enum Tokens {
 
     // MARK: - Spacing
@@ -52,7 +52,8 @@ enum Tokens {
         static let toolbarHeight: CGFloat = 52
         static let statusBarHeight: CGFloat = 24
         static let controlHeight: CGFloat = 26
-        static let searchFieldWidth: CGFloat = 208
+        /// 176, not the design's 208 — Beautify (FM-13) took a pill's width.
+        static let searchFieldWidth: CGFloat = 176
 
         static let editorTopInset: CGFloat = 8
         static let editorLeadingInset: CGFloat = 10
@@ -139,7 +140,7 @@ enum Tokens {
     // MARK: - Semantic surfaces
 
     /// Named so call sites read as intent. No literal hex — the editor ground is the one
-    /// exception and it lives in `SyntaxTheme.editorGround` (see `Design/tokens.md` §7 FLAG-1).
+    /// exception, and it lives in `SyntaxTheme.editorGround` (ADR-10).
     enum Surface {
         static let window = Color(nsColor: .windowBackgroundColor)
         static let control = Color(nsColor: .controlBackgroundColor)
@@ -170,10 +171,12 @@ enum Tokens {
         static let scrollIndicatorWidth: CGFloat = 8
     }
 
-    // MARK: - Glass (ADR-08)
+    // MARK: - Glass (ADR-08, Amendment 1)
 
-    /// The middle rung of the fallback chain, from the design. `GlassBackground` owns the
-    /// gating; these are the `.regularMaterial` stand-in values for macOS 15 and earlier.
+    /// **Command palette only.** Popovers and sheets use `.popover` / `.sheet` and take the system
+    /// material — Liquid Glass on macOS 26, the right vibrancy on 15 — with Reduce Transparency and
+    /// Increase Contrast handled for us. These values exist for the one floating surface that has
+    /// no system presentation behind it.
     enum Glass {
         static let blurRadius: CGFloat = 28
         static let blurRadiusDark: CGFloat = 30

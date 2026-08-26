@@ -18,7 +18,8 @@
 <div style="width: 1280px; border-radius: 10px; overflow: hidden; position: relative;
             background: {{ c.editorBg }}; box-shadow: 0 24px 60px rgba(0,0,0,.45), 0 0 0 .5px rgba(0,0,0,.5);">
 
-  <!-- Toolbar 52 · Format/Minify/Compare pills, search field, inspector toggle. No New/Open/Save. -->
+  <!-- Toolbar 52 · Format/Beautify/Minify/Compare pills, search field, inspector toggle.
+       No New/Open/Save - those are File-menu only (SH-01, revised). -->
   <div style="display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 12px;
               background: {{ c.chrome }}; border-bottom: 1px solid {{ c.sep }};">
     <div style="display: flex; gap: 8px; align-items: center; padding-right: 4px;">
@@ -39,6 +40,10 @@
       </div>
       <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px;
                   border: 1px solid {{ c.ctrlBorder }}; background: {{ c.ctrl }}; font-size: 13px; color: {{ c.text }};">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="{{ c.dim }}" stroke-width="1.3"><path d="M2.5 3.5h11M5 6.5h6M5 9.5h8.5M2.5 12.5h5" stroke-linecap="round"/><path d="M13 6.5h.5M12 9.5h1.5" stroke-linecap="round"/></svg>Beautify
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px;
+                  border: 1px solid {{ c.ctrlBorder }}; background: {{ c.ctrl }}; font-size: 13px; color: {{ c.text }};">
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="{{ c.dim }}" stroke-width="1.3"><path d="M2.5 8h4M9.5 8h4M5 5.5 7 8l-2 2.5M11 5.5 9 8l2 2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Minify
       </div>
       <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px;
@@ -49,7 +54,7 @@
       <div style="width: 1px; height: 20px; background: {{ c.sep }}; margin: 0 6px;"></div>
 
       <!-- Live search: query + match counter. Two-tier match rendering is in the editor below. -->
-      <div style="display: flex; align-items: center; gap: 6px; width: 208px; height: 26px; padding: 0 8px;
+      <div style="display: flex; align-items: center; gap: 6px; width: 176px; height: 26px; padding: 0 8px;
                   border-radius: 6px; border: 1px solid {{ c.searchBorder }}; background: {{ c.field }};">
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="{{ c.dim }}" stroke-width="1.4"><circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2 13.5 13.5" stroke-linecap="round"/></svg>
         <span class="mono" style="font-size: 12px; color: {{ c.text }};">value</span>
@@ -388,7 +393,8 @@ class Component extends DCLogic {
     }));
 
     const paletteRows = [
-      ['≡', 'Format document', '⌘⇧F', 1],
+      ['≡', 'Beautify document', '⌘⇧B', 1],
+      ['≣', 'Format document', '⌘⇧F', 0],
       ['↧', 'Format on save', '', 0],
       ['↓≡', 'Sort keys in selection', '⌥⌘S', 0],
       ['␣', 'Set indentation…', '', 0],

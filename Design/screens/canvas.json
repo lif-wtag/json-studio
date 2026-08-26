@@ -1,20 +1,93 @@
 {
   "artboards": [
-    { "file": "Main.dc.html",          "x": 0,    "y": 0,    "w": 1280, "h": 836, "title": "1a · Main window · light · valid" },
-    { "file": "MainDark.dc.html",      "x": 1380, "y": 0,    "w": 1280, "h": 836, "title": "1b · Main window · dark · valid" },
-
-    { "file": "InvalidError.dc.html",  "x": 0,    "y": 976,  "w": 1280, "h": 836, "title": "2a · Invalid · error popover · 3 errors" },
-    { "file": "Compare.dc.html",       "x": 1380, "y": 976,  "w": 1280, "h": 836, "title": "2b · Compare workspace" },
-
-    { "file": "PaletteGlass.dc.html",  "x": 0,    "y": 1952, "w": 1280, "h": 836, "title": "3a · Command palette · Liquid Glass" },
-    { "file": "PaletteOpaque.dc.html", "x": 1380, "y": 1952, "w": 1280, "h": 836, "title": "3b · Same palette · Reduce Transparency" },
-    { "file": "PaletteLight.dc.html",  "x": 2760, "y": 1952, "w": 1280, "h": 836, "title": "3c · Light ground · glass" },
-
-    { "file": "EmptyState.dc.html",    "x": 0,    "y": 2928, "w": 1280, "h": 960, "title": "4a · Empty state · drag-over" },
-    { "file": "Inspector.dc.html",     "x": 1380, "y": 2928, "w": 680,  "h": 836, "title": "4b · Inspector · 280 default / 240 minimum" },
-    { "file": "Settings.dc.html",      "x": 2160, "y": 2928, "w": 660,  "h": 580, "title": "4c · Settings · Editor pane" },
-
-    { "file": "Window.dc.html",        "x": 0,    "y": 4028, "w": 1280, "h": 836, "title": "Window component · mode × material" }
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 836,
+      "title": "1a \u00b7 Main window \u00b7 light \u00b7 valid"
+    },
+    {
+      "file": "MainDark.dc.html",
+      "x": 1380,
+      "y": 0,
+      "w": 1280,
+      "h": 836,
+      "title": "1b \u00b7 Main window \u00b7 dark \u00b7 valid"
+    },
+    {
+      "file": "InvalidError.dc.html",
+      "x": 0,
+      "y": 976,
+      "w": 1280,
+      "h": 836,
+      "title": "2a \u00b7 Invalid \u00b7 error popover \u00b7 3 errors"
+    },
+    {
+      "file": "Compare.dc.html",
+      "x": 1380,
+      "y": 976,
+      "w": 1280,
+      "h": 836,
+      "title": "2b \u00b7 Compare workspace"
+    },
+    {
+      "file": "PaletteGlass.dc.html",
+      "x": 0,
+      "y": 1952,
+      "w": 1280,
+      "h": 836,
+      "title": "3a \u00b7 Command palette \u00b7 Liquid Glass"
+    },
+    {
+      "file": "PaletteOpaque.dc.html",
+      "x": 1380,
+      "y": 1952,
+      "w": 1280,
+      "h": 836,
+      "title": "3b \u00b7 Same palette \u00b7 Reduce Transparency"
+    },
+    {
+      "file": "PaletteLight.dc.html",
+      "x": 2760,
+      "y": 1952,
+      "w": 1280,
+      "h": 836,
+      "title": "3c \u00b7 Light ground \u00b7 glass"
+    },
+    {
+      "file": "EmptyState.dc.html",
+      "x": 0,
+      "y": 2928,
+      "w": 1280,
+      "h": 960,
+      "title": "4a \u00b7 Empty state \u00b7 drag-over"
+    },
+    {
+      "file": "Inspector.dc.html",
+      "x": 1380,
+      "y": 2928,
+      "w": 680,
+      "h": 836,
+      "title": "4b \u00b7 Inspector \u00b7 280 default / 240 minimum"
+    },
+    {
+      "file": "Settings.dc.html",
+      "x": 2160,
+      "y": 2928,
+      "w": 660,
+      "h": 580,
+      "title": "4c \u00b7 Settings \u00b7 Editor pane"
+    },
+    {
+      "file": "Window.dc.html",
+      "x": 0,
+      "y": 4028,
+      "w": 1280,
+      "h": 836,
+      "title": "Window component \u00b7 mode \u00d7 material"
+    }
   ],
   "annotations": [
     {
@@ -36,7 +109,7 @@
       "x": 2760,
       "y": 976,
       "w": 640,
-      "text": "Three things in the approved design contradict the locked phase plan. Shown here, flagged rather than treated as v1.0 chrome:\n\n- Command palette (row 3) is SH-14, PHASE 4. The design ships it as a Run 1 artefact.\n- Code folding - the folded \"tags\" chip and the fold caret that justifies the 48pt gutter - is ED-15, deliberately DEFERRED to Phase 4 behind a spike gate. The gutter width is adopted now; the behaviour is not.\n- The Statistics tab is IN-09, Phase 4. Drawn visible and disabled, which matches 3d's \"leave room, don't build it\".\n\nOne genuine ADR conflict: the editor ground is not textBackgroundColor. Every ratio was measured against #F7F7FA / #161826, so swapping in the semantic colour means re-measuring the whole palette. Needs an ADR before 3b."
+      "text": "Three things in the approved design contradict the locked phase plan. Shown here, flagged rather than treated as v1.0 chrome:\n\n- Command palette (row 3) is SH-14, PHASE 4. The design ships it as a Run 1 artefact.\n- Code folding - the folded \"tags\" chip and the fold caret that justifies the 48pt gutter - is ED-15, deliberately DEFERRED to Phase 4 behind a spike gate. The gutter width is adopted now; the behaviour is not.\n- The Statistics tab is IN-09, Phase 4. Drawn visible and disabled, which matches 3d's \"leave room, don't build it\".\n\nRESOLVED by ADR-10: the editor ground is an authored colour. Every ratio was measured against #F7F7FA / #161826, and the tightest token sits at 4.44:1, so decision #9 gains a third exception rather than the palette being re-measured. Consequence for 3b: Increase Contrast needs explicit handling, since the system will not lift an authored ground.\n\nADR-08 Amendment 1: glass on popovers and sheets is NOT ours to build. On macOS 26 an app built against the new SDK gets Liquid Glass automatically on .popover and .sheet, and the system honours Reduce Transparency and Increase Contrast. So the custom chain survives for the command palette alone - the one floating surface with no system presentation."
     },
     {
       "id": "diff-colour-limit",
@@ -44,7 +117,16 @@
       "y": 2100,
       "w": 640,
       "text": "Measured on the ADOPTED palette: worst-case contrast between the four diff colours is 1.00-1.10 across normal, deuteranopic, protanopic AND grayscale vision.\n\nNo choice of hex fixes this - four colours all holding 4.5:1 against one ground are necessarily close in luminance, so they cannot also be far from each other. The design reached the same conclusion independently, which is why it specifies three carriers.\n\nSo in the compare workspace every changed row carries its colour, its glyph, its gutter sign (+ / -), AND its label, and added is the lighter tint of the added/removed pair. Grayscale the artboard and it still reads."
+    },
+    {
+      "id": "beautify",
+      "x": 2760,
+      "y": 4028,
+      "w": 640,
+      "text": "Beautify (FM-13) added 2026-08-26, fourth toolbar verb.\n\nIt is NOT a synonym for Format. Format is uniform and one-value-per-line. Beautify is width-aware: a leaf object or array stays inline while it fits printWidth (default 100) and breaks when it does not. Both are order-preserving and idempotent.\n\nWhy it earns the width: on Design/sample-payload.json, Format produces 224 lines and Beautify produces 92 - the same document, 2.4x the scrolling. The fixture is already written in the Beautify shape, because that is how humans hand-write JSON.\n\nThe search field narrows 208 -> 176 to pay for the pill. Note the design's own self-critique argues for FEWER toolbar verbs (it wants Minify dropped); that decision is still open."
     }
   ],
-  "launch": { "view": "canvas" }
+  "launch": {
+    "view": "canvas"
+  }
 }
