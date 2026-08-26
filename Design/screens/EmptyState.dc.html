@@ -1,0 +1,121 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; background: #E9E9EF; font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; }
+    a { color: #5B44C8; } a:hover { color: #4A37A8; }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+    .cap { font-size: 11px; font-weight: 600; color: #63687C; text-transform: uppercase; letter-spacing: .06em; }
+    .rec { display: flex; align-items: center; gap: 9px; padding: 6px 9px; border-radius: 6px; }
+  </style>
+</helmet>
+
+<div style="width: 1280px; height: 960px; box-sizing: border-box; padding: 0 0 24px;
+            display: flex; flex-direction: column; align-items: center; gap: 20px;">
+
+  <div style="width: 1280px; height: 836px; border-radius: 10px; overflow: hidden; background: #F7F7FA;
+              box-shadow: 0 24px 60px rgba(0,0,0,.28), 0 0 0 .5px rgba(0,0,0,.16);
+              display: flex; flex-direction: column;">
+
+    <div style="display: flex; align-items: center; height: 52px; flex: none; padding: 0 12px;
+                background: #ECECF0; border-bottom: 1px solid rgba(20,21,26,.13);">
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f57;"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #febc2e;"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #28c840;"></span>
+      </div>
+      <div style="flex: 1;"></div>
+      <span style="font-size: 13px; color: #63687C;">JSON Studio</span>
+      <div style="flex: 1;"></div>
+      <div style="width: 60px;"></div>
+    </div>
+
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 72px; padding: 0 80px;">
+      <div style="width: 440px; height: 320px; border: 2px dashed rgba(20,21,26,.18); border-radius: 12px;
+                  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="rgba(20,21,26,.28)" stroke-width="1.2">
+          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" stroke-linejoin="round"/>
+          <path d="M14 3v5h5" stroke-linejoin="round"/>
+          <path d="M9.6 12.4c-.7 0-.7 1.1 0 1.1s.7 1.1 0 1.1" stroke-linecap="round"/>
+          <path d="M14.4 12.4c.7 0 .7 1.1 0 1.1s-.7 1.1 0 1.1" stroke-linecap="round"/>
+        </svg>
+        <div style="text-align: center;">
+          <div style="font-size: 15px; color: #1C1D22; font-weight: 500;">Drop a JSON file here</div>
+          <div style="font-size: 12px; color: #63687C; margin-top: 4px;">or paste with <span class="mono">&#8984;V</span></div>
+        </div>
+        <div style="display: flex; gap: 7px; margin-top: 2px;">
+          <div style="font-size: 13px; font-weight: 500; color: #FFFFFF; background: #5B44C8;
+                      padding: 5px 13px; border-radius: 6px;">Open&#8230;</div>
+          <div style="font-size: 13px; color: #1C1D22; background: #FBFBFD; border: 1px solid rgba(20,21,26,.16);
+                      padding: 5px 13px; border-radius: 6px;">New Document</div>
+        </div>
+      </div>
+
+      <div style="width: 320px;">
+        <div class="cap" style="margin-bottom: 8px;">Recent</div>
+        <sc-for list="{{ recents }}" as="r" hint-placeholder-count="4">
+          <div class="rec">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="#63687C" stroke-width="1.2" style="flex: none;">
+              <path d="M9.5 1.5H4.5A1.5 1.5 0 0 0 3 3v10a1.5 1.5 0 0 0 1.5 1.5h7A1.5 1.5 0 0 0 13 13V5z"/>
+              <path d="M9.5 1.5V5H13"/>
+            </svg>
+            <div style="min-width: 0;">
+              <div style="font-size: 12px; color: #1C1D22; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ r.name }}</div>
+              <div style="font-size: 11px; color: #63687C;">{{ r.meta }}</div>
+            </div>
+          </div>
+        </sc-for>
+        <div style="height: 1px; background: rgba(20,21,26,.10); margin: 8px 9px;"></div>
+        <div style="font-size: 11px; color: #63687C; padding: 0 9px; line-height: 1.5;">
+          Your JSON never leaves your Mac. No account, no upload, no telemetry.
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; height: 24px; flex: none; padding: 0 10px;
+                background: #ECECF0; border-top: 1px solid rgba(20,21,26,.13);">
+      <span style="font-size: 11px; color: #63687C;">Empty document</span>
+    </div>
+  </div>
+
+  <!-- Drag-over: accent fill + accent border + label. Never fill alone. -->
+  <div style="width: 1280px; display: flex; align-items: center; gap: 20px; padding: 0 6px;">
+    <div class="cap" style="width: 92px; flex: none;">Drag-over</div>
+    <div style="width: 440px; height: 74px; border: 2px solid #5B44C8; border-radius: 12px;
+                background: rgba(91,68,200,.12); display: flex; align-items: center;
+                justify-content: center; gap: 9px;">
+      <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="#5B44C8" stroke-width="1.4">
+        <path d="M8 2v8" stroke-linecap="round"/>
+        <path d="M4.8 6.8 8 10l3.2-3.2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2.5 12.5h11" stroke-linecap="round"/>
+      </svg>
+      <span style="font-size: 13px; font-weight: 500; color: #5B44C8;">Drop to open</span>
+    </div>
+    <div style="font-size: 11px; color: #63687C; line-height: 1.55; max-width: 600px;">
+      Accent at 12% with a 2pt accent border and a label. A file too large to open is refused here
+      with its size and the limit stated, not accepted and then abandoned.
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1280,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { recents: [
+      { name: 'telemetry-response.json', meta: '~/Downloads \u00b7 3.7 KB \u00b7 today' },
+      { name: 'devices-fixture.json',    meta: '~/work/nordwind \u00b7 118 KB \u00b7 yesterday' },
+      { name: 'openapi-3.1.json',        meta: '~/work/api \u00b7 1.2 MB \u00b7 22 Aug' },
+      { name: 'tsconfig.json',           meta: '~/work/studio \u00b7 2 KB \u00b7 19 Aug' }
+    ] };
+  }
+}
+</script>
+</body>
+</html>

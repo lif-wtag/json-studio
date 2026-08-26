@@ -1,0 +1,132 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 836,
+      "title": "1a \u00b7 Main window \u00b7 light \u00b7 valid"
+    },
+    {
+      "file": "MainDark.dc.html",
+      "x": 1380,
+      "y": 0,
+      "w": 1280,
+      "h": 836,
+      "title": "1b \u00b7 Main window \u00b7 dark \u00b7 valid"
+    },
+    {
+      "file": "InvalidError.dc.html",
+      "x": 0,
+      "y": 976,
+      "w": 1280,
+      "h": 836,
+      "title": "2a \u00b7 Invalid \u00b7 error popover \u00b7 3 errors"
+    },
+    {
+      "file": "Compare.dc.html",
+      "x": 1380,
+      "y": 976,
+      "w": 1280,
+      "h": 836,
+      "title": "2b \u00b7 Compare workspace"
+    },
+    {
+      "file": "PaletteGlass.dc.html",
+      "x": 0,
+      "y": 1952,
+      "w": 1280,
+      "h": 836,
+      "title": "3a \u00b7 Command palette \u00b7 Liquid Glass"
+    },
+    {
+      "file": "PaletteOpaque.dc.html",
+      "x": 1380,
+      "y": 1952,
+      "w": 1280,
+      "h": 836,
+      "title": "3b \u00b7 Same palette \u00b7 Reduce Transparency"
+    },
+    {
+      "file": "PaletteLight.dc.html",
+      "x": 2760,
+      "y": 1952,
+      "w": 1280,
+      "h": 836,
+      "title": "3c \u00b7 Light ground \u00b7 glass"
+    },
+    {
+      "file": "EmptyState.dc.html",
+      "x": 0,
+      "y": 2928,
+      "w": 1280,
+      "h": 960,
+      "title": "4a \u00b7 Empty state \u00b7 drag-over"
+    },
+    {
+      "file": "Inspector.dc.html",
+      "x": 1380,
+      "y": 2928,
+      "w": 680,
+      "h": 836,
+      "title": "4b \u00b7 Inspector \u00b7 280 default / 240 minimum"
+    },
+    {
+      "file": "Settings.dc.html",
+      "x": 2160,
+      "y": 2928,
+      "w": 660,
+      "h": 580,
+      "title": "4c \u00b7 Settings \u00b7 Editor pane"
+    },
+    {
+      "file": "Window.dc.html",
+      "x": 0,
+      "y": 4028,
+      "w": 1280,
+      "h": 836,
+      "title": "Window component \u00b7 mode \u00d7 material"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "adopted-palette",
+      "x": 0,
+      "y": -300,
+      "w": 720,
+      "text": "Reconciled to the approved Claude Design project (\"JSON Studio - Run 1\"), which the project contract names the visual source of truth.\n\nHue follows JSON's grammar: structure - keys, braces, punctuation - stays on the blurple-to-neutral axis, and the leaf types fan away from it by distance from \"text\" (strings green-teal, numbers amber, booleans magenta, null a chroma-free grey and italic). Grounds are #F7F7FA and #161826 - a blue-grey at 4% chroma, deliberately not black.\n\nEvery ratio is computed by Design/palette-measure.py, which exits with a failure list. ALL CHECKS PASS."
+    },
+    {
+      "id": "design-fixes",
+      "x": 2760,
+      "y": 0,
+      "w": 640,
+      "text": "Verified against the design, then corrected.\n\nAll 24 of the design's stated ratios are right to 2dp against the bare ground - it was properly measured. But three prose claims are false, and two real defects sit behind them:\n\n1. \"Every text token clears 4.5:1\" - true on the bare ground, FALSE on the design's own current-line and selection washes: string 4.17, number 4.08, null 4.13, punctuation 3.71 light / 3.39 dark. Six values fixed; hue drift under 1.6 deg, so the grammar logic is untouched.\n\n2. At the design's search-fill opacities the matched key text fell to 2.87:1 on the dark active fill. Alphas reduced; the bright active ring now carries \"this one\", which is what the design's ring is for.\n\n3. \"Max saturation 68% (boolean, light)\" - number light was 100% HLS. \"Keys and strings 150 deg apart\" - actually 84/91. Intent holds; figures were overstated."
+    },
+    {
+      "id": "phase-flags",
+      "x": 2760,
+      "y": 976,
+      "w": 640,
+      "text": "Three things in the approved design contradict the locked phase plan. Shown here, flagged rather than treated as v1.0 chrome:\n\n- Command palette (row 3) is SH-14, PHASE 4. The design ships it as a Run 1 artefact.\n- Code folding - the folded \"tags\" chip and the fold caret that justifies the 48pt gutter - is ED-15, deliberately DEFERRED to Phase 4 behind a spike gate. The gutter width is adopted now; the behaviour is not.\n- The Statistics tab is IN-09, Phase 4. Drawn visible and disabled, which matches 3d's \"leave room, don't build it\".\n\nRESOLVED by ADR-10: the editor ground is an authored colour. Every ratio was measured against #F7F7FA / #161826, and the tightest token sits at 4.44:1, so decision #9 gains a third exception rather than the palette being re-measured. Consequence for 3b: Increase Contrast needs explicit handling, since the system will not lift an authored ground.\n\nADR-08 Amendment 1: glass on popovers and sheets is NOT ours to build. On macOS 26 an app built against the new SDK gets Liquid Glass automatically on .popover and .sheet, and the system honours Reduce Transparency and Increase Contrast. So the custom chain survives for the command palette alone - the one floating surface with no system presentation."
+    },
+    {
+      "id": "diff-colour-limit",
+      "x": 2760,
+      "y": 2100,
+      "w": 640,
+      "text": "Measured on the ADOPTED palette: worst-case contrast between the four diff colours is 1.00-1.10 across normal, deuteranopic, protanopic AND grayscale vision.\n\nNo choice of hex fixes this - four colours all holding 4.5:1 against one ground are necessarily close in luminance, so they cannot also be far from each other. The design reached the same conclusion independently, which is why it specifies three carriers.\n\nSo in the compare workspace every changed row carries its colour, its glyph, its gutter sign (+ / -), AND its label, and added is the lighter tint of the added/removed pair. Grayscale the artboard and it still reads."
+    },
+    {
+      "id": "toolbar-verbs",
+      "x": 2760,
+      "y": 4028,
+      "w": 640,
+      "text": "Toolbar verbs settled 2026-08-26: Format, Minify, Compare. Three, not two and not four.\n\nMinify STAYS. The design's own self-critique argued for dropping it - \"minify is a pre-export act performed once, and it is already in the JSON menu with Opt-Cmd-M\" - and that was overruled.\n\nA fourth verb, \"Beautify\", was proposed and rejected: in practice Beautify and Format mean the same thing, and a toolbar pill that duplicates its neighbour is the weakest kind of addition. Width-aware output - keeping a leaf object inline while it fits - stays available, but as a printWidth PREFERENCE on Format rather than as a second command. One verb, one meaning."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

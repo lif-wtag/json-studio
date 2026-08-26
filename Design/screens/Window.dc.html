@@ -1,0 +1,420 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; }
+    a { color: #5B44C8; } a:hover { color: #4A37A8; }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+    .tab  { flex: 1; text-align: center; font-size: 12px; line-height: 20px; border-radius: 5px; }
+  </style>
+</helmet>
+
+<div style="width: 1280px; border-radius: 10px; overflow: hidden; position: relative;
+            background: {{ c.editorBg }}; box-shadow: 0 24px 60px rgba(0,0,0,.45), 0 0 0 .5px rgba(0,0,0,.5);">
+
+  <!-- Toolbar 52 · Format/Minify/Compare pills, search field, inspector toggle.
+       No New/Open/Save - those are File-menu only (SH-01, revised). -->
+  <div style="display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 12px;
+              background: {{ c.chrome }}; border-bottom: 1px solid {{ c.sep }};">
+    <div style="display: flex; gap: 8px; align-items: center; padding-right: 4px;">
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f57;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #febc2e;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #28c840;"></span>
+    </div>
+    <div style="display: flex; flex-direction: column; justify-content: center; min-width: 220px;">
+      <span style="font-size: 13px; font-weight: 590; color: {{ c.text }}; letter-spacing: -.08px;">telemetry-response.json</span>
+      <span style="font-size: 11px; color: {{ c.dim }};">~/Downloads — Edited</span>
+    </div>
+    <div style="flex: 1;"></div>
+
+    <div style="display: flex; align-items: center; gap: 4px;">
+      <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px;
+                  border: 1px solid {{ c.ctrlBorder }}; background: {{ c.ctrl }}; font-size: 13px; color: {{ c.text }};">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="{{ c.dim }}" stroke-width="1.3"><path d="M2.5 3.5h11M5 6.5h8.5M5 9.5h6.5M2.5 12.5h11" stroke-linecap="round"/></svg>Format
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px;
+                  border: 1px solid {{ c.ctrlBorder }}; background: {{ c.ctrl }}; font-size: 13px; color: {{ c.text }};">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="{{ c.dim }}" stroke-width="1.3"><path d="M2.5 8h4M9.5 8h4M5 5.5 7 8l-2 2.5M11 5.5 9 8l2 2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>Minify
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px;
+                  border: 1px solid {{ c.ctrlBorder }}; background: {{ c.ctrl }}; font-size: 13px; color: {{ c.text }};">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="{{ c.dim }}" stroke-width="1.3"><path d="M4 2.5v11M12 2.5v11" stroke-linecap="round"/><circle cx="4" cy="6" r="1.6"/><circle cx="12" cy="10" r="1.6"/><path d="M5.6 6h4.8a1.6 1.6 0 0 1 1.6 1.6v.8" stroke-linecap="round"/></svg>Compare
+      </div>
+
+      <div style="width: 1px; height: 20px; background: {{ c.sep }}; margin: 0 6px;"></div>
+
+      <!-- Live search: query + match counter. Two-tier match rendering is in the editor below. -->
+      <div style="display: flex; align-items: center; gap: 6px; width: 208px; height: 26px; padding: 0 8px;
+                  border-radius: 6px; border: 1px solid {{ c.searchBorder }}; background: {{ c.field }};">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="{{ c.dim }}" stroke-width="1.4"><circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2 13.5 13.5" stroke-linecap="round"/></svg>
+        <span class="mono" style="font-size: 12px; color: {{ c.text }};">value</span>
+        <div style="flex: 1;"></div>
+        <span class="mono" style="font-size: 11px; color: {{ c.dim }}; font-variant-numeric: tabular-nums;">1/3</span>
+      </div>
+
+      <div style="width: 1px; height: 20px; background: {{ c.sep }}; margin: 0 6px;"></div>
+
+      <div style="display: flex; align-items: center; justify-content: center; width: 28px; height: 26px;
+                  border-radius: 6px; border: 1px solid {{ c.accentBorder }}; background: {{ c.accentFill }};">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="{{ c.accentInk }}" stroke-width="1.3"><rect x="2" y="3" width="12" height="10" rx="1.6"/><path d="M10.5 3v10"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two columns: editor + inspector at 280. No sidebar. -->
+  <div style="display: grid; grid-template-columns: 1fr 280px; height: 760px;">
+
+    <div style="display: flex; overflow: hidden; background: {{ c.editorBg }}; position: relative;">
+      <!-- Gutter 48: fold caret sits left of the number -->
+      <div style="width: 48px; flex: none; padding-top: 8px; background: {{ c.gutter }};
+                  border-right: 1px solid {{ c.sep }};">
+        <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="43">
+          <div style="height: 17.4px; padding-right: 8px; line-height: 17.4px; background: {{ ln.gutterBg }};
+                      display: flex; justify-content: flex-end; align-items: center; gap: 4px;">
+            <span class="mono" style="font-size: 10px; color: {{ c.fold }}; width: 8px;">{{ ln.foldGlyph }}</span>
+            <span class="mono" style="font-size: 11px; font-variant-numeric: tabular-nums; color: {{ ln.numColor }};">{{ ln.n }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1; padding: 8px 0 0 10px; overflow: hidden;">
+        <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="43">
+          <div style="display: flex; align-items: center; height: 17.4px; line-height: 17.4px;
+                      background: {{ ln.bg }}; box-shadow: {{ ln.ring }};">
+            <sc-for list="{{ ln.tokens }}" as="t" hint-placeholder-count="6">
+              <span class="mono" style="white-space: pre; flex: none; font-size: 12px; color: {{ t.c }};
+                          background: {{ t.bg }}; box-shadow: {{ t.ring }}; border-radius: 2px;
+                          font-style: {{ t.style }};">{{ t.t }}</span>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="position: absolute; top: 8px; right: 3px; width: 8px; height: 300px; border-radius: 4px;
+                  background: {{ c.scroll }};"></div>
+    </div>
+
+    <!-- Inspector: Tree / Info / Statistics, Structure header, footer path bar. Never glass. -->
+    <div style="background: {{ c.inspector }}; border-left: 1px solid {{ c.sep }}; display: flex;
+                flex-direction: column; overflow: hidden;">
+      <div style="padding: 8px; border-bottom: 1px solid {{ c.sep }};">
+        <div style="display: flex; padding: 2px; border-radius: 6px; background: {{ c.segTrack }}; gap: 2px;">
+          <div class="tab" style="background: {{ c.segOn }}; color: {{ c.text }}; box-shadow: 0 0 0 .5px {{ c.sep }};">Tree</div>
+          <div class="tab" style="color: {{ c.dim }};">Info</div>
+          <div class="tab" style="color: {{ c.statsInk }};">Statistics</div>
+        </div>
+      </div>
+
+      <div style="padding: 8px 8px 4px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: {{ c.dim }};">Structure</span>
+        <span class="mono" style="font-size: 11px; color: {{ c.dim }}; font-variant-numeric: tabular-nums;">depth 7</span>
+      </div>
+
+      <div style="flex: 1; overflow: hidden; padding: 0 4px 4px;">
+        <sc-for list="{{ tree }}" as="n" hint-placeholder-count="30">
+          <div style="display: flex; align-items: center; gap: 4px; height: 21px; padding-right: 6px;
+                      padding-left: {{ n.pad }}px; border-radius: 6px; background: {{ n.bg }};
+                      box-shadow: {{ n.ring }};">
+            <span class="mono" style="font-size: 9px; width: 9px; color: {{ c.dim }};">{{ n.arrow }}</span>
+            <span class="mono" style="font-size: 10px; width: 14px; color: {{ n.iconColor }};">{{ n.icon }}</span>
+            <span class="mono" style="font-size: 11px; color: {{ c.text }}; white-space: nowrap;">{{ n.key }}</span>
+            <div style="flex: 1; min-width: 4px;"></div>
+            <span class="mono" style="font-size: 11px; color: {{ n.valColor }}; white-space: nowrap;
+                        overflow: hidden; text-overflow: ellipsis; max-width: 118px; text-align: right;
+                        font-variant-numeric: tabular-nums;">{{ n.val }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding: 8px 10px; border-top: 1px solid {{ c.sep }}; display: flex; align-items: center; gap: 6px;">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="{{ c.dim }}" stroke-width="1.3" style="flex: none;"><rect x="5.5" y="5.5" width="8" height="8" rx="1.4"/><path d="M10.5 2.5h-7A1 1 0 0 0 2.5 3.5v7"/></svg>
+        <span class="mono" style="font-size: 11px; color: {{ c.dim }}; overflow: hidden;
+                    text-overflow: ellipsis; white-space: nowrap;">$.devices[0].coordinates.last.altitude.reference.datum</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status bar 24: glyph + label, never colour alone. Indent mode at the right. -->
+  <div style="display: flex; align-items: center; gap: 8px; height: 24px; padding: 0 10px;
+              background: {{ c.chrome }}; border-top: 1px solid {{ c.sep }};">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="{{ c.valid }}" stroke-width="1.5" style="flex: none;"><circle cx="8" cy="8" r="6.2"/><path d="M5.4 8.2 7.2 10l3.4-3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span style="font-size: 11px; color: {{ c.valid }};">Valid JSON</span>
+    <span style="font-size: 11px; color: {{ c.dim }};">·</span>
+    <span class="mono" style="font-size: 11px; color: {{ c.dim }}; font-variant-numeric: tabular-nums;">119 properties</span>
+    <span style="font-size: 11px; color: {{ c.dim }};">·</span>
+    <span class="mono" style="font-size: 11px; color: {{ c.dim }}; font-variant-numeric: tabular-nums;">3.7 KB</span>
+    <span style="font-size: 11px; color: {{ c.dim }};">·</span>
+    <span class="mono" style="font-size: 11px; color: {{ c.dim }};">UTF-8</span>
+    <div style="flex: 1;"></div>
+    <span class="mono" style="font-size: 11px; color: {{ c.dim }}; font-variant-numeric: tabular-nums;">Ln 30, Col 20</span>
+    <span style="font-size: 11px; color: {{ c.dim }};">·</span>
+    <span class="mono" style="font-size: 11px; color: {{ c.dim }};">2 spaces</span>
+  </div>
+
+  <!-- Command palette ⌘⇧P — the only glass surface (ADR-08). Phase 4; design-time only. -->
+  <sc-if value="{{ showPalette }}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: {{ c.scrim }}; display: flex;
+                justify-content: center; padding-top: 132px;">
+      <div style="width: 560px; height: fit-content; border-radius: 10px; background: {{ c.glassBg }};
+                  backdrop-filter: {{ c.glassBlur }}; border: 1px solid {{ c.glassBorder }};
+                  box-shadow: 0 20px 50px rgba(0,0,0,.4), inset 0 1px 0 {{ c.glassSheen }}; overflow: hidden;">
+        <div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid {{ c.sep }};">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="{{ c.dim }}" stroke-width="1.4"><circle cx="7" cy="7" r="4.2"/><path d="M10.2 10.2 13.5 13.5" stroke-linecap="round"/></svg>
+          <span style="font-size: 15px; color: {{ c.text }};">form</span>
+          <span style="width: 1px; height: 17px; background: {{ c.accentInk }};"></span>
+          <div style="flex: 1;"></div>
+          <span class="mono" style="font-size: 11px; color: {{ c.dim }};">⌘⇧P</span>
+        </div>
+        <div style="padding: 6px;">
+          <sc-for list="{{ paletteRows }}" as="r" hint-placeholder-count="5">
+            <div style="display: flex; align-items: center; gap: 10px; height: 32px; padding: 0 10px;
+                        border-radius: 6px; background: {{ r.bg }};">
+              <span class="mono" style="font-size: 12px; width: 16px; color: {{ c.dim }};">{{ r.icon }}</span>
+              <span style="font-size: 13px; color: {{ c.text }};">{{ r.label }}</span>
+              <div style="flex: 1;"></div>
+              <span class="mono" style="font-size: 11px; color: {{ c.dim }};">{{ r.key }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="padding: 7px 12px; border-top: 1px solid {{ c.sep }};">
+          <span style="font-size: 11px; color: {{ c.dim }};">{{ materialNote }}</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1280,"height":840},"mode":{"editor":"enum","options":["light","dark"],"default":"light","tsType":"&#39;light&#39; | &#39;dark&#39;"},"material":{"editor":"enum","options":["off","glass","opaque"],"default":"off","tsType":"&#39;off&#39; | &#39;glass&#39; | &#39;opaque&#39;"}}'>
+// Design/sample-payload.json, per the project contract. Never {"name":"John"}.
+const PAYLOAD = `{
+  "schemaVersion": "2026-08",
+  "generatedAt": "2026-08-26T13:45:00Z",
+  "request": {
+    "id": "req_9F2aQ7bX",
+    "method": "GET",
+    "path": "/v3/devices/telemetry",
+    "authenticated": true,
+    "headers": {
+      "accept": "application/json",
+      "x-trace-id": "b3e1c4a0-7d2f-4e88-9a11-0f6c2d5e8a44",
+      "x-region": null
+    }
+  },
+  "account": {
+    "id": 8842001,
+    "externalId": 9007199254740993,
+    "displayName": "Nordwind Logistik GmbH",
+    "locale": "de-DE",
+    "note": "Wichtiger Hinweis für den Betrieb: Die angeschlossenen Sensoren übertragen",
+    "tags": ["priority", "eu-central", "cold-chain", "24x7", "verträge-2026"],
+    "billing": null
+  },
+  "devices": [
+    {
+      "id": "dev-001",
+      "label": "Kühlwagen A · Trailer 12",
+      "online": true,
+      "firmware": "4.11.2",
+      "battery": 0.87,
+      "coordinates": {
+        "last": {
+          "lat": 52.520008,
+          "lon": 13.404954,
+          "accuracy": { "horizontal": 4.5, "vertical": 8.0, "source": "gnss" },
+          "altitude": { "value": 34.2, "unit": "m", "reference": { "datum": "WGS84" } }
+        },
+        "history": []
+      },
+      "sensors": {
+        "temperature": { "value": -18.4, "unit": "°C", "withinRange": true },
+        "humidity": { "value": 41, "unit": "%", "withinRange": true },
+        "door": { "open": false, "lastOpenedAt": null }
+      },`;
+
+// Adopted palette — Design/tokens.md §3. Six values fixed from the design so text clears
+// 4.5:1 on the design's own washes; search-fill alphas reduced for the same reason.
+const PAL = {
+  light: {
+    editorBg: '#F7F7FA', chrome: '#ECECF0', gutter: '#F2F2F6', inspector: '#F2F2F6',
+    text: '#1C1D22', dim: '#63687C', sep: 'rgba(20,21,26,.13)',
+    ctrl: '#FBFBFD', ctrlBorder: 'rgba(20,21,26,.16)', field: '#FFFFFF', searchBorder: '#6E5FD8',
+    accentFill: 'rgba(91,68,200,.12)', accentBorder: 'rgba(91,68,200,.42)', accentInk: '#5B44C8',
+    segTrack: 'rgba(20,21,26,.06)', segOn: '#FFFFFF', scroll: 'rgba(20,21,26,.18)',
+    statsInk: 'rgba(99,104,124,.45)',
+    valid: '#1C7A4B', num: '#8A8FA3', numActive: '#1C1D22',
+    key: '#5B44C8', str: '#0A6551', numTok: '#8C4700', bool: '#9C2F72', nul: '#55596C',
+    brk: '#3A3D4D', punct: '#55596A',
+    curline: '#EFEFF5', curlineEdge: '#DEDEE8', sel: '#CBD3F0',
+    search: 'rgba(232,195,60,.37)', active: 'rgba(240,168,42,.51)',
+    activeRing: 'inset 0 0 0 1px #A85A00', matchRing: 'inset 0 0 0 1px #6E5FD8',
+    fold: '#8A8FA3', foldChip: 'rgba(20,21,26,.07)',
+    scrim: 'rgba(20,21,26,.16)', glassBg: 'rgba(250,250,253,.72)',
+    glassBlur: 'saturate(180%) blur(28px)', glassBorder: 'rgba(255,255,255,.7)',
+    glassSheen: 'rgba(255,255,255,.9)'
+  },
+  dark: {
+    editorBg: '#161826', chrome: '#202234', gutter: '#1A1C2B', inspector: '#1B1D2B',
+    text: '#E9E9ED', dim: '#9397AB', sep: 'rgba(233,233,237,.14)',
+    ctrl: 'rgba(233,233,237,.07)', ctrlBorder: 'rgba(233,233,237,.14)',
+    field: 'rgba(0,0,0,.24)', searchBorder: '#8C86D6',
+    accentFill: 'rgba(179,168,240,.16)', accentBorder: 'rgba(179,168,240,.45)', accentInk: '#B3A8F0',
+    segTrack: 'rgba(0,0,0,.28)', segOn: 'rgba(233,233,237,.12)', scroll: 'rgba(233,233,237,.18)',
+    statsInk: 'rgba(147,151,171,.45)',
+    valid: '#5FD39B', num: '#6A7089', numActive: '#E9E9ED',
+    key: '#B3A8F0', str: '#6ED3AE', numTok: '#EFB275', bool: '#E79AC9', nul: '#9EA6BE',
+    brk: '#CBCFE0', punct: '#A1A6BA',
+    curline: '#1D2033', curlineEdge: '#2A2E45', sel: '#2E3768',
+    search: 'rgba(201,162,46,.20)', active: 'rgba(240,194,74,.24)',
+    activeRing: 'inset 0 0 0 1px #F0C24A', matchRing: 'inset 0 0 0 1px #8C86D6',
+    fold: '#8B92AC', foldChip: 'rgba(233,233,237,.09)',
+    scrim: 'rgba(0,0,0,.34)', glassBg: 'rgba(38,41,60,.62)',
+    glassBlur: 'saturate(180%) blur(30px)', glassBorder: 'rgba(233,233,237,.16)',
+    glassSheen: 'rgba(255,255,255,.10)'
+  }
+};
+
+// depth, kind, key, value, disclosure (0 leaf / 1 open / 2 closed), selected
+const TREE = [
+  [0, 'obj',  '$',             '6 keys', 1],
+  [1, 'str',  'schemaVersion', '"2026-08"', 0],
+  [1, 'str',  'generatedAt',   '"2026-08-26T…"', 0],
+  [1, 'obj',  'request',       '5 keys', 2],
+  [1, 'obj',  'account',       '7 keys', 1],
+  [2, 'num',  'externalId',    '9007199254740993', 0],
+  [2, 'str',  'note',          '"Wichtiger Hinw…"', 0],
+  [2, 'arr',  'tags',          '5 items', 2],
+  [2, 'null', 'billing',       'null', 0],
+  [1, 'arr',  'devices',       '2 items', 1],
+  [2, 'obj',  '[0]',           '9 keys', 1],
+  [3, 'str',  'id',            '"dev-001"', 0],
+  [3, 'bool', 'online',        'true', 0],
+  [3, 'num',  'battery',       '0.87', 0],
+  [3, 'obj',  'coordinates',   '2 keys', 1],
+  [4, 'obj',  'last',          '4 keys', 1],
+  [5, 'num',  'lat',           '52.520008', 0],
+  [5, 'obj',  'accuracy',      '3 keys', 2],
+  [5, 'obj',  'altitude',      '3 keys', 1],
+  [6, 'obj',  'reference',     '1 key', 1],
+  [7, 'str',  'datum',         '"WGS84"', 0, 1],
+  [4, 'arr',  'history',       '0 items', 0],
+  [3, 'obj',  'sensors',       '3 keys', 2],
+  [3, 'arr',  'telemetry',     '32 items', 2],
+  [2, 'obj',  '[1]',           '9 keys', 2],
+  [1, 'obj',  'summary',       '7 keys', 2]
+];
+
+// Phosphor in the design; these stand in for the SF Symbols in tokens.md §5.
+const ICONS = { obj: '{}', arr: '[]', str: '""', num: '#', bool: '◑', null: '○' };
+
+class Component extends DCLogic {
+  tokenize(src) {
+    const out = [];
+    let s = src, m;
+    while (s.length) {
+      if ((m = s.match(/^\s+/))) out.push(['ws', m[0]]);
+      else if ((m = s.match(/^"(?:[^"\\]|\\.)*"(?=\s*:)/))) out.push(['key', m[0]]);
+      else if ((m = s.match(/^"(?:[^"\\]|\\.)*"/))) out.push(['str', m[0]]);
+      else if ((m = s.match(/^-?\d[\d.]*(?:[eE][+-]?\d+)?/))) out.push(['num', m[0]]);
+      else if ((m = s.match(/^(?:true|false)/))) out.push(['bool', m[0]]);
+      else if ((m = s.match(/^null/))) out.push(['null', m[0]]);
+      else if ((m = s.match(/^[{}\[\]]/))) out.push(['brk', m[0]]);
+      else if ((m = s.match(/^[:,]/))) out.push(['punct', m[0]]);
+      else { out.push(['ws', s[0]]); s = s.slice(1); continue; }
+      s = s.slice(m[0].length);
+    }
+    return out;
+  }
+
+  renderVals() {
+    const mode = this.props.mode === 'dark' ? 'dark' : 'light';
+    const c = PAL[mode];
+    const material = this.props.material || 'off';
+    const query = 'value';
+    const raw = PAYLOAD.split('\n');
+    const CUR = 29;   // "battery": 0.87 — caret line
+    const FOLD = 20;  // "tags" folded to a chip
+    const BRACKET = 24; // matched brace ring
+    const tokColor = { key: c.key, str: c.str, num: c.numTok, bool: c.bool,
+                       null: c.nul, brk: c.brk, punct: c.punct, ws: c.punct };
+
+    let seen = 0;
+    const lines = raw.map((src, i) => {
+      const n = i + 1;
+      const folded = i === FOLD;
+      const toks = folded
+        ? [['ws', '    '], ['key', '"tags"'], ['punct', ':'], ['ws', ' '],
+           ['brk', '['], ['fold', ' 5 items '], ['brk', ']'], ['punct', ',']]
+        : this.tokenize(src);
+
+      const tokens = toks.map(([k, t]) => {
+        const o = { t, c: k === 'fold' ? c.fold : tokColor[k], bg: 'transparent',
+                    ring: 'none', style: k === 'null' ? 'italic' : 'normal' };
+        if (k === 'fold') { o.bg = c.foldChip; o.ring = 'inset 0 0 0 1px ' + c.fold; }
+        // Two-tier search: the active match carries a ring as well as a heavier fill.
+        if (k === 'key' && t.indexOf(query) > -1) {
+          seen++;
+          if (seen === 1) { o.bg = c.active; o.ring = c.activeRing; }
+          else o.bg = c.search;
+        }
+        if (i === BRACKET && k === 'brk') o.ring = c.matchRing;
+        return o;
+      });
+
+      return {
+        n, tokens,
+        bg: i === CUR ? c.curline : 'transparent',
+        ring: i === CUR ? 'inset 0 0 0 1px ' + c.curlineEdge : 'none',
+        numColor: i === CUR ? c.numActive : c.num,
+        gutterBg: i === CUR ? c.curline : 'transparent',
+        foldGlyph: folded ? '›' : (/[\[{]$/.test(src.trim()) ? '⌄' : '')
+      };
+    });
+
+    const tree = TREE.map(([d, kind, key, val, state, sel]) => ({
+      pad: 6 + d * 13,
+      arrow: state === 1 ? '⌄' : state === 2 ? '›' : '',
+      icon: ICONS[kind],
+      iconColor: sel ? c.accentInk : c.dim,
+      key, val,
+      valColor: sel ? c.text : c.dim,
+      bg: sel ? c.accentFill : 'transparent',
+      ring: sel ? 'inset 0 0 0 1px ' + c.accentBorder : 'none'
+    }));
+
+    const paletteRows = [
+      ['≡', 'Format document', '⌘⇧F', 1],
+      ['↧', 'Format on save', '', 0],
+      ['↓≡', 'Sort keys in selection', '⌥⌘S', 0],
+      ['␣', 'Set indentation…', '', 0],
+      ['↗', 'Export formatted copy…', '⇧⌘E', 0]
+    ].map(([icon, label, key, on]) => ({
+      icon, label, key, bg: on ? c.accentFill : 'transparent'
+    }));
+
+    const opaque = material === 'opaque';
+    return {
+      c: opaque
+        ? Object.assign({}, c, {
+            glassBg: c.chrome, glassBlur: 'none', glassBorder: c.sep,
+            glassSheen: 'transparent',
+            scrim: mode === 'light' ? 'rgba(20,21,26,.22)' : 'rgba(0,0,0,.5)'
+          })
+        : c,
+      lines, tree, paletteRows,
+      showPalette: material !== 'off',
+      materialNote: opaque
+        ? 'Reduce Transparency on — opaque controlBackgroundColor, same hierarchy and spacing'
+        : 'Liquid Glass (macOS 26) · .glassEffect(.regular, in: .rect(cornerRadius: 10))'
+    };
+  }
+}
+</script>
+</body>
+</html>
