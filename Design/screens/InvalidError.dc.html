@@ -1,0 +1,254 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; background: #E9E9EF; font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; }
+    a { color: #5B44C8; } a:hover { color: #4A37A8; }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+    /* Adopted palette — light. Design/tokens.md §3. */
+    .k  { color: #5B44C8; } .s { color: #0A6551; } .n { color: #8C4700; }
+    .b  { color: #9C2F72; } .nu { color: #55596C; font-style: italic; }
+    .br { color: #3A3D4D; } .p { color: #55596A; }
+
+    .ln { color: #8A8FA3; font-variant-numeric: tabular-nums; }
+    /* errorUnderline #C22E2E — a marker at the exact span, never a red wash. */
+    .err { text-decoration: underline wavy #C22E2E; text-decoration-thickness: 2px;
+           text-underline-offset: 3px; }
+    .cl { display: flex; align-items: center; height: 17.4px; line-height: 17.4px;
+          font-size: 12px; white-space: pre; }
+  </style>
+</helmet>
+
+<div style="width: 1280px; height: 836px; border-radius: 10px; overflow: hidden; position: relative;
+            background: #F7F7FA; box-shadow: 0 24px 60px rgba(0,0,0,.28), 0 0 0 .5px rgba(0,0,0,.16);
+            display: flex; flex-direction: column;">
+
+  <div style="display: flex; align-items: center; gap: 12px; height: 52px; flex: none; padding: 0 12px;
+              background: #ECECF0; border-bottom: 1px solid rgba(20,21,26,.13);">
+    <div style="display: flex; gap: 8px; align-items: center; padding-right: 4px;">
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f57;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #febc2e;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #28c840;"></span>
+    </div>
+    <div style="display: flex; flex-direction: column; justify-content: center; min-width: 220px;">
+      <span style="font-size: 13px; font-weight: 590; color: #1C1D22; letter-spacing: -.08px;">telemetry-response.json</span>
+      <span style="font-size: 11px; color: #63687C;">~/Downloads — Edited</span>
+    </div>
+    <div style="flex: 1;"></div>
+    <!-- Error navigation, next/previous -->
+    <div style="display: flex; align-items: center; gap: 4px;">
+      <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 6px;
+                  border: 1px solid rgba(194,46,46,.42); background: rgba(194,46,46,.10); font-size: 13px; color: #C22E2E;">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#C22E2E" stroke-width="1.4"><path d="M8 2.4 14.4 13.4H1.6z" stroke-linejoin="round"/><path d="M8 6.4v3" stroke-linecap="round"/><circle cx="8" cy="11.3" r=".8" fill="#C22E2E" stroke="none"/></svg>
+        3 errors
+      </div>
+      <div style="display: flex; align-items: center; height: 26px; border-radius: 6px;
+                  border: 1px solid rgba(20,21,26,.16); background: #FBFBFD; overflow: hidden;">
+        <span class="mono" style="font-size: 12px; color: #1C1D22; padding: 0 8px;">‹</span>
+        <span style="width: 1px; align-self: stretch; background: rgba(20,21,26,.13);"></span>
+        <span class="mono" style="font-size: 12px; color: #1C1D22; padding: 0 8px;">›</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="flex: 1; display: flex; min-height: 0; position: relative;">
+
+    <div style="flex: 1; display: flex; overflow: hidden; background: #F7F7FA; min-width: 0;">
+      <!-- Gutter 48 — error markers occupy the fold caret's column -->
+      <div style="width: 48px; flex: none; padding-top: 8px; background: #F2F2F6;
+                  border-right: 1px solid rgba(20,21,26,.13);">
+        <sc-for list="{{ gutter }}" as="g" hint-placeholder-count="42">
+          <div style="height: 17.4px; line-height: 17.4px; padding-right: 8px; display: flex;
+                      align-items: center; justify-content: flex-end; gap: 3px;">
+            <span style="width: 9px; display: flex; align-items: center;">
+              <sc-if value="{{ g.bad }}" hint-placeholder-val="{{ false }}">
+                <svg width="9" height="9" viewBox="0 0 16 16" fill="#C22E2E"><path d="M7.1 1.9a1 1 0 0 1 1.8 0l6 11.1A1 1 0 0 1 14 14.5H2a1 1 0 0 1-.9-1.5zM8 5.2a.8.8 0 0 0-.8.9l.3 3.4a.5.5 0 0 0 1 0l.3-3.4A.8.8 0 0 0 8 5.2m0 5.6a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8"/></svg>
+              </sc-if>
+            </span>
+            <span class="mono ln" style="font-size: 11px; color: {{ g.color }}; font-weight: {{ g.weight }};">{{ g.n }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex: 1; padding: 8px 0 0 10px; overflow: hidden; min-width: 0;">
+        <div class="mono"><div class="cl">    <span class="k">"billing"</span><span class="p">:</span> <span class="nu">null</span></div>
+<div class="cl">  <span class="br">}</span><span class="p">,</span></div>
+<div class="cl">  <span class="k">"devices"</span><span class="p">:</span> <span class="br">[</span></div>
+<div class="cl">    <span class="br">{</span></div>
+<div class="cl">      <span class="k">"id"</span><span class="p">:</span> <span class="s">"dev-001"</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"label"</span><span class="p">:</span> <span class="s">"Kühlwagen A · Trailer 12"</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"online"</span><span class="p">:</span> <span class="b">true</span><span class="p">,</span></div>
+<div class="cl" style="background: #EFEFF5; box-shadow: inset 0 0 0 1px #DEDEE8;">      <span class="k">"firmware"</span><span class="p">:</span> <span class="s err">"4.11.2"</span></div>
+<div class="cl">      <span class="k">"battery"</span><span class="p">:</span> <span class="n">0.87</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"coordinates"</span><span class="p">:</span> <span class="br">{</span></div>
+<div class="cl">        <span class="k">"last"</span><span class="p">:</span> <span class="br">{</span></div>
+<div class="cl">          <span class="k">"lat"</span><span class="p">:</span> <span class="n">52.520008</span><span class="p">,</span></div>
+<div class="cl">          <span class="k">"lon"</span><span class="p">:</span> <span class="n">13.404954</span><span class="p">,</span></div>
+<div class="cl">          <span class="k">"accuracy"</span><span class="p">:</span> <span class="br">{</span> <span class="k">"horizontal"</span><span class="p">:</span> <span class="n">4.5</span><span class="p">,</span> <span class="k">"source"</span><span class="p">:</span> <span class="s">"gnss"</span> <span class="br">}</span><span class="p">,</span></div>
+<div class="cl">          <span class="k">"altitude"</span><span class="p">:</span> <span class="br">{</span> <span class="k">"value"</span><span class="p">:</span> <span class="n">34.2</span><span class="p">,</span> <span class="k">"unit"</span><span class="p">:</span> <span class="s err">"m</span></div>
+<div class="cl">        <span class="br">}</span><span class="p">,</span></div>
+<div class="cl">        <span class="k">"history"</span><span class="p">:</span> <span class="br">[]</span></div>
+<div class="cl">      <span class="br">}</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"sensors"</span><span class="p">:</span> <span class="br">{</span></div>
+<div class="cl">        <span class="k">"temperature"</span><span class="p">:</span> <span class="br">{</span> <span class="k">"value"</span><span class="p">:</span> <span class="n">-18.4</span><span class="p">,</span> <span class="k">"unit"</span><span class="p">:</span> <span class="s">"°C"</span> <span class="br">}</span><span class="p">,</span></div>
+<div class="cl">        <span class="k">"humidity"</span><span class="p">:</span> <span class="br">{</span> <span class="k">"value"</span><span class="p">:</span> <span class="n">41</span><span class="p">,</span> <span class="k">"unit"</span><span class="p">:</span> <span class="s">"%"</span> <span class="br">}</span><span class="p">,</span></div>
+<div class="cl">        <span class="k">"door"</span><span class="p">:</span> <span class="br">{</span> <span class="k">"open"</span><span class="p">:</span> <span class="b">false</span><span class="p">,</span> <span class="k">"lastOpenedAt"</span><span class="p">:</span> <span class="nu">null</span> <span class="br">}</span></div>
+<div class="cl">      <span class="br">}</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"telemetry"</span><span class="p">:</span> <span class="br">[</span></div>
+<div class="cl">        <span class="n">-18.4</span><span class="p">,</span> <span class="n">-18.3</span><span class="p">,</span> <span class="n">-18.5</span><span class="p">,</span> <span class="n">-18.6</span><span class="p">,</span> <span class="n">-18.4</span><span class="p">,</span> <span class="n">-18.2</span><span class="p">,</span> <span class="n">-18.1</span><span class="p">,</span> <span class="n">-18.3</span><span class="p">,</span></div>
+<div class="cl">        <span class="n">-18.7</span><span class="p">,</span> <span class="n">-18.9</span><span class="p">,</span> <span class="n">-19.0</span><span class="p">,</span> <span class="n">-18.8</span><span class="p">,</span> <span class="n">-18.5</span><span class="p">,</span> <span class="n">-18.4</span><span class="p">,</span> <span class="n">-18.4</span><span class="p">,</span> <span class="n">-18.3</span><span class="p">,</span></div>
+<div class="cl">        <span class="n">-18.2</span><span class="p">,</span> <span class="n">-18.1</span><span class="p">,</span> <span class="n">-18.0</span><span class="p">,</span> <span class="n">-17.9</span><span class="p">,</span> <span class="n">-18.1</span><span class="p">,</span> <span class="n">-18.4</span><span class="p">,</span> <span class="n">-18.6</span><span class="p">,</span> <span class="n">-18.7</span><span class="p">,</span></div>
+<div class="cl">        <span class="n">-18.8</span><span class="p">,</span> <span class="n">-18.6</span><span class="p">,</span> <span class="n">-18.5</span><span class="p">,</span> <span class="n">-18.4</span><span class="p">,</span> <span class="n">-18.3</span><span class="p">,</span> <span class="n">-18.2</span><span class="p">,</span> <span class="n">-18.4</span><span class="p">,</span> <span class="n">-18.5</span></div>
+<div class="cl">      <span class="br">]</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"alerts"</span><span class="p">:</span> <span class="br">[</span></div>
+<div class="cl">        <span class="br">{</span> <span class="k">"code"</span><span class="p">:</span> <span class="n">1001</span><span class="p">,</span> <span class="k">"severity"</span><span class="p">:</span> <span class="s">"info"</span><span class="p">,</span> <span class="k">"acknowledged"</span><span class="p">:</span> <span class="b">true</span> <span class="br">}</span><span class="p">,</span></div>
+<div class="cl">        <span class="br">{</span> <span class="k">"code"</span><span class="p">:</span> <span class="n">2003</span><span class="p">,</span> <span class="k">"severity"</span><span class="p">:</span> <span class="s">"warning"</span><span class="p">,</span> <span class="k">"acknowledged"</span><span class="p">:</span> <span class="b">false</span> <span class="br">}</span></div>
+<div class="cl">      <span class="br">]</span></div>
+<div class="cl">    <span class="br">}</span><span class="p">,</span></div>
+<div class="cl">    <span class="br">{</span></div>
+<div class="cl">      <span class="k">"id"</span><span class="p">:</span> <span class="s">"dev-002"</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"label"</span><span class="p">:</span> <span class="s">"Kühlraum B — 冷蔵室 🧊"</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"online"</span><span class="p">:</span> <span class="b">false</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"battery"</span><span class="p">:</span> <span class="nu">null</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"firmware"</span><span class="p">:</span> <span class="s">"4.9.0"</span><span class="p">,</span></div>
+<div class="cl">      <span class="k">"coordinates"</span><span class="p">:</span> <span class="br">{</span></div></div>
+      </div>
+    </div>
+
+    <!-- The tree does NOT go blank while the document is invalid mid-edit (ADR-02) -->
+    <div style="width: 280px; flex: none; background: #F2F2F6; border-left: 1px solid rgba(20,21,26,.13);
+                display: flex; flex-direction: column; overflow: hidden;">
+      <div style="padding: 8px; border-bottom: 1px solid rgba(20,21,26,.13);">
+        <div style="display: flex; padding: 2px; border-radius: 6px; background: rgba(20,21,26,.06); gap: 2px;">
+          <div style="flex: 1; text-align: center; font-size: 12px; line-height: 20px; border-radius: 5px;
+                      background: #FFFFFF; color: #1C1D22; box-shadow: 0 0 0 .5px rgba(20,21,26,.13);">Tree</div>
+          <div style="flex: 1; text-align: center; font-size: 12px; line-height: 20px; color: #63687C;">Info</div>
+          <div style="flex: 1; text-align: center; font-size: 12px; line-height: 20px; color: rgba(99,104,124,.45);">Statistics</div>
+        </div>
+      </div>
+
+      <div style="padding: 7px 10px; background: rgba(194,46,46,.08);
+                  border-bottom: 1px solid rgba(194,46,46,.18); display: flex; align-items: center; gap: 6px;">
+        <svg width="11" height="11" viewBox="0 0 16 16" fill="#C22E2E" style="flex: none;"><path d="M7.1 1.9a1 1 0 0 1 1.8 0l6 11.1A1 1 0 0 1 14 14.5H2a1 1 0 0 1-.9-1.5zM8 5.2a.8.8 0 0 0-.8.9l.3 3.4a.5.5 0 0 0 1 0l.3-3.4A.8.8 0 0 0 8 5.2m0 5.6a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8"/></svg>
+        <span style="font-size: 11px; color: #8E2222;">Partial structure — 3 spans unparsed</span>
+      </div>
+
+      <div style="padding: 8px 8px 4px; display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #63687C;">Structure</span>
+        <span class="mono" style="font-size: 11px; color: #63687C;">depth 5</span>
+      </div>
+
+      <div style="flex: 1; padding: 0 4px;">
+        <sc-for list="{{ tree }}" as="n" hint-placeholder-count="9">
+          <div style="display: flex; align-items: center; gap: 4px; height: 21px; padding-right: 6px;
+                      padding-left: {{ n.pad }}px; border-radius: 6px; background: {{ n.bg }};">
+            <span class="mono" style="font-size: 9px; width: 9px; color: #63687C;">{{ n.arrow }}</span>
+            <span class="mono" style="font-size: 10px; width: 14px; color: {{ n.iconColor }};">{{ n.icon }}</span>
+            <span class="mono" style="font-size: 11px; color: #1C1D22; white-space: nowrap;">{{ n.key }}</span>
+            <div style="flex: 1; min-width: 4px;"></div>
+            <span class="mono" style="font-size: 11px; color: {{ n.valColor }}; white-space: nowrap;
+                        overflow: hidden; text-overflow: ellipsis; max-width: 110px; text-align: right;">{{ n.val }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="padding: 8px 10px; border-top: 1px solid rgba(20,21,26,.13); display: flex; align-items: center; gap: 6px;">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#63687C" stroke-width="1.3" style="flex: none;"><rect x="5.5" y="5.5" width="8" height="8" rx="1.4"/><path d="M10.5 2.5h-7A1 1 0 0 0 2.5 3.5v7"/></svg>
+        <span class="mono" style="font-size: 11px; color: #63687C; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">$.devices[0].firmware</span>
+      </div>
+    </div>
+
+    <!-- Error popover — glass (ADR-08 permits popovers). Copy verbatim from error-copy.md. -->
+    <div style="position: absolute; left: 318px; top: 150px; width: 404px; border-radius: 10px;
+                background: rgba(250,250,253,.72); backdrop-filter: saturate(180%) blur(28px);
+                border: 1px solid rgba(255,255,255,.7);
+                box-shadow: 0 20px 50px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.9);
+                padding: 12px 14px;">
+
+      <div style="display: flex; align-items: center; margin-bottom: 8px;">
+        <span class="mono" style="font-size: 11px; color: #63687C; font-variant-numeric: tabular-nums;">‹ 1 of 3 ›</span>
+      </div>
+
+      <div style="display: flex; gap: 8px; align-items: flex-start;">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="#C22E2E" style="flex: none; margin-top: 1px;"><path d="M7.1 1.9a1 1 0 0 1 1.8 0l6 11.1A1 1 0 0 1 14 14.5H2a1 1 0 0 1-.9-1.5zM8 5.2a.8.8 0 0 0-.8.9l.3 3.4a.5.5 0 0 0 1 0l.3-3.4A.8.8 0 0 0 8 5.2m0 5.6a.9.9 0 1 0 0 1.8.9.9 0 0 0 0-1.8"/></svg>
+        <div style="min-width: 0;">
+          <div style="font-size: 13px; font-weight: 600; color: #1C1D22; line-height: 1.35;">Add a comma after this value.</div>
+          <div style="font-size: 12px; color: #3A3D4D; line-height: 1.45; margin-top: 2px;">The next property starts on line 30 without one.</div>
+        </div>
+      </div>
+
+      <!-- Excerpt centres on the CAUSE line, one line of context above -->
+      <div style="margin-top: 10px; background: rgba(20,21,26,.04); border-radius: 6px; padding: 7px 8px;">
+        <div class="mono" style="font-size: 12px; line-height: 17.4px; white-space: pre; color: #1C1D22;"><span style="color: #8A8FA3;">28 │</span>   <span class="k">"online"</span><span class="p">:</span> <span class="b">true</span><span class="p">,</span>
+<span style="color: #C22E2E; font-weight: 600;">29 │</span>   <span class="k">"firmware"</span><span class="p">:</span> <span class="s err">"4.11.2"</span></div>
+      </div>
+
+      <div style="display: flex; align-items: center; margin-top: 10px; gap: 8px;">
+        <span class="mono" style="font-size: 11px; color: #63687C; font-variant-numeric: tabular-nums;">Line 29, column 30</span>
+        <div style="flex: 1;"></div>
+        <div style="font-size: 12px; font-weight: 500; color: #FFFFFF; background: #5B44C8;
+                    padding: 4px 11px; border-radius: 6px;">Go to Error</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invalid: glyph + text, clickable to navigate. Never colour alone. -->
+  <div style="display: flex; align-items: center; gap: 8px; height: 24px; flex: none; padding: 0 10px;
+              background: #ECECF0; border-top: 1px solid rgba(20,21,26,.13);">
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#C22E2E" stroke-width="1.5" style="flex: none;"><path d="M8 2.4 14.4 13.4H1.6z" stroke-linejoin="round"/><path d="M8 6.4v3" stroke-linecap="round"/><circle cx="8" cy="11.3" r=".8" fill="#C22E2E" stroke="none"/></svg>
+    <span style="font-size: 11px; color: #C22E2E; text-decoration: underline;
+                 text-decoration-color: rgba(194,46,46,.4); text-underline-offset: 2px;">3 errors · first on line 29</span>
+    <div style="flex: 1;"></div>
+    <span class="mono" style="font-size: 11px; color: #63687C; font-variant-numeric: tabular-nums;">3.7 KB · UTF-8 · Ln 29, Col 30</span>
+    <span style="font-size: 11px; color: #63687C;">·</span>
+    <span class="mono" style="font-size: 11px; color: #63687C;">2 spaces</span>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1280,"height":836}}'>
+class Component extends DCLogic {
+  renderVals() {
+    // Errors at 29 (missing comma) and 36 (unterminated string); the third is off-screen,
+    // which is the point — it is still reachable from the status bar and the ‹ › control.
+    const BAD = new Set([29, 36]);
+    const gutter = [];
+    for (let n = 22; n <= 63; n++) {
+      gutter.push({
+        n, bad: BAD.has(n),
+        color: BAD.has(n) ? '#C22E2E' : (n === 29 ? '#1C1D22' : '#8A8FA3'),
+        weight: BAD.has(n) ? '600' : '400'
+      });
+    }
+    const dim = '#63687C';
+    const tree = [
+      [0, '{}', '$', '6 keys', 1, 0],
+      [1, '[]', 'devices', '2 items', 1, 0],
+      [2, '{}', '[0]', 'partial', 1, 0],
+      [3, '""', 'id', '"dev-001"', 0, 0],
+      [3, '◑', 'online', 'true', 0, 0],
+      [3, '""', 'firmware', 'unparsed', 0, 1],
+      [3, '#', 'battery', '0.87', 0, 0],
+      [3, '{}', 'coordinates', 'partial', 2, 0],
+      [3, '[]', 'telemetry', '32 items', 2, 0]
+    ].map(([d, icon, key, val, state, bad]) => ({
+      pad: 6 + d * 13,
+      arrow: state === 1 ? '⌄' : state === 2 ? '›' : '',
+      icon, key, val,
+      iconColor: bad ? '#C22E2E' : dim,
+      valColor: bad ? '#C22E2E' : dim,
+      bg: bad ? 'rgba(194,46,46,.08)' : 'transparent'
+    }));
+    return { gutter, tree };
+  }
+}
+</script>
+</body>
+</html>

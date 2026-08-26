@@ -1,0 +1,231 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; background: #E9E9EF; font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; }
+    a { color: #5B44C8; } a:hover { color: #4A37A8; }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+    .cl  { display: flex; align-items: center; height: 19px; line-height: 19px; font-size: 12px;
+           white-space: pre; }
+    .gut { width: 32px; flex: none; text-align: right; padding-right: 6px; color: #8A8FA3;
+           font-variant-numeric: tabular-nums; font-size: 11px; }
+    .sgn { width: 11px; flex: none; text-align: center; font-size: 12px; font-weight: 600; }
+    .gly { width: 16px; flex: none; display: flex; align-items: center; justify-content: center; }
+    .chip { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500;
+            padding: 3px 9px; border-radius: 6px; background: #FBFBFD;
+            box-shadow: 0 0 0 1px rgba(20,21,26,.09); font-variant-numeric: tabular-nums; }
+    .cap { font-size: 11px; font-weight: 600; color: #63687C; }
+  </style>
+</helmet>
+
+<div style="width: 1280px; height: 836px; border-radius: 10px; overflow: hidden; background: #F7F7FA;
+            box-shadow: 0 24px 60px rgba(0,0,0,.28), 0 0 0 .5px rgba(0,0,0,.16);
+            display: flex; flex-direction: column;">
+
+  <div style="display: flex; align-items: center; gap: 12px; height: 52px; flex: none; padding: 0 12px;
+              background: #ECECF0; border-bottom: 1px solid rgba(20,21,26,.13);">
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f57;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #febc2e;"></span>
+      <span style="width: 12px; height: 12px; border-radius: 50%; background: #28c840;"></span>
+    </div>
+    <div style="flex: 1;"></div>
+    <span style="font-size: 13px; font-weight: 590; color: #1C1D22;">Compare</span>
+    <div style="flex: 1;"></div>
+
+    <!-- Array matching exposed in the UI: for record arrays this is the difference between a
+         useful diff and noise. -->
+    <div style="display: flex; align-items: center; gap: 7px;">
+      <span class="cap">Match arrays by</span>
+      <div style="display: flex; padding: 2px; border-radius: 6px; background: rgba(20,21,26,.06); gap: 2px;">
+        <div style="font-size: 12px; line-height: 20px; padding: 0 9px; border-radius: 5px; color: #63687C;">Index</div>
+        <div style="font-size: 12px; line-height: 20px; padding: 0 9px; border-radius: 5px; background: #FFFFFF;
+                    color: #1C1D22; box-shadow: 0 0 0 .5px rgba(20,21,26,.13);">Identity key</div>
+        <div style="font-size: 12px; line-height: 20px; padding: 0 9px; border-radius: 5px; color: #63687C;">Heuristic</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 5px; height: 26px; padding: 0 8px;
+                  border-radius: 6px; border: 1px solid rgba(20,21,26,.16); background: #FFFFFF;">
+        <span class="cap" style="font-weight: 400;">key</span>
+        <span class="mono" style="font-size: 12px; color: #5B44C8;">id</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Change summary by class. Colour + glyph + label on every one. -->
+  <div style="display: flex; align-items: center; gap: 8px; height: 40px; flex: none; padding: 0 12px;
+              background: #F2F2F6; border-bottom: 1px solid rgba(20,21,26,.13);">
+    <span style="font-size: 12px; font-weight: 600; color: #1C1D22; font-variant-numeric: tabular-nums;">13 changes</span>
+    <span style="width: 1px; height: 18px; background: rgba(20,21,26,.13); margin: 0 3px;"></span>
+
+    <div class="chip" style="color: #1C7A4B;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.4" y="2.4" width="11.2" height="11.2" rx="2"/><path d="M8 5.4v5.2M5.4 8h5.2" stroke-linecap="round"/></svg>
+      3 Added
+    </div>
+    <div class="chip" style="color: #C22E2E;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.4" y="2.4" width="11.2" height="11.2" rx="2"/><path d="M5.4 8h5.2" stroke-linecap="round"/></svg>
+      2 Removed
+    </div>
+    <div class="chip" style="color: #8C4700;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.6 2.9a1.3 1.3 0 0 1 1.9 1.9L6.4 10.9l-2.5.7.7-2.5z" stroke-linejoin="round"/><path d="M3 14h10" stroke-linecap="round"/></svg>
+      7 Changed
+    </div>
+    <div class="chip" style="color: #5B44C8;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.6 5.4h9l-2.3-2.3M13.4 10.6h-9l2.3 2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      1 Type changed
+    </div>
+
+    <div style="flex: 1;"></div>
+    <span style="font-size: 11px; color: #63687C;">Key order is not a difference</span>
+  </div>
+
+  <!-- Side by side, synchronised on MATCHED NODES rather than line numbers -->
+  <div style="flex: 1; display: flex; min-height: 0;">
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid rgba(20,21,26,.13);">
+      <div style="height: 26px; flex: none; background: #F2F2F6; border-bottom: 1px solid rgba(20,21,26,.13);
+                  display: flex; align-items: center; padding: 0 10px; gap: 6px;">
+        <span style="font-size: 11px; color: #1C1D22; font-weight: 500;">telemetry-response.json</span>
+        <span class="mono" style="font-size: 11px; color: #63687C;">13:45Z</span>
+      </div>
+      <div style="flex: 1; padding-top: 6px; overflow: hidden;">
+        <sc-for list="{{ left }}" as="r" hint-placeholder-count="20">
+          <div class="cl" style="background: {{ r.bg }};">
+            <span class="gut">{{ r.n }}</span>
+            <span class="sgn" style="color: {{ r.ink }};">{{ r.sign }}</span>
+            <span class="gly">{{ r.glyph }}</span>
+            <span class="mono" style="color: {{ r.textInk }};">{{ r.text }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+      <div style="height: 26px; flex: none; background: #F2F2F6; border-bottom: 1px solid rgba(20,21,26,.13);
+                  display: flex; align-items: center; padding: 0 10px; gap: 6px;">
+        <span style="font-size: 11px; color: #1C1D22; font-weight: 500;">telemetry-response-2.json</span>
+        <span class="mono" style="font-size: 11px; color: #63687C;">14:10Z</span>
+      </div>
+      <div style="flex: 1; padding-top: 6px; overflow: hidden;">
+        <sc-for list="{{ right }}" as="r" hint-placeholder-count="20">
+          <div class="cl" style="background: {{ r.bg }};">
+            <span class="gut">{{ r.n }}</span>
+            <span class="sgn" style="color: {{ r.ink }};">{{ r.sign }}</span>
+            <span class="gly">{{ r.glyph }}</span>
+            <span class="mono" style="color: {{ r.textInk }};">{{ r.text }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <!-- The type-changed detail names the transition, per the design's dynamic label -->
+  <div style="height: 34px; flex: none; background: #F2F2F6; border-top: 1px solid rgba(20,21,26,.13);
+              display: flex; align-items: center; padding: 0 12px; gap: 8px;">
+    <span class="cap">Selected change</span>
+    <div class="chip" style="color: #5B44C8;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.6 5.4h9l-2.3-2.3M13.4 10.6h-9l2.3 2.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      string → number
+    </div>
+    <span class="mono" style="font-size: 11px; color: #63687C;">$.devices[0].sensors.humidity.value</span>
+  </div>
+
+  <!-- The visible key-order test the brief requires -->
+  <div style="height: 54px; flex: none; background: #ECECF0; border-top: 1px solid rgba(20,21,26,.13);
+              display: flex; align-items: center; padding: 0 12px; gap: 12px;">
+    <span class="cap">Key-order test</span>
+    <div style="display: flex; align-items: center; gap: 8px;" class="mono">
+      <span style="font-size: 12px; background: #FFFFFF; border: 1px solid rgba(20,21,26,.16);
+                   border-radius: 6px; padding: 4px 8px;"><span style="color:#3A3D4D">{</span><span style="color:#5B44C8">"a"</span><span style="color:#55596A">:</span><span style="color:#8C4700">1</span><span style="color:#55596A">,</span><span style="color:#5B44C8">"b"</span><span style="color:#55596A">:</span><span style="color:#8C4700">2</span><span style="color:#3A3D4D">}</span></span>
+      <span style="font-size: 12px; color: #63687C;">vs</span>
+      <span style="font-size: 12px; background: #FFFFFF; border: 1px solid rgba(20,21,26,.16);
+                   border-radius: 6px; padding: 4px 8px;"><span style="color:#3A3D4D">{</span><span style="color:#5B44C8">"b"</span><span style="color:#55596A">:</span><span style="color:#8C4700">2</span><span style="color:#55596A">,</span><span style="color:#5B44C8">"a"</span><span style="color:#55596A">:</span><span style="color:#8C4700">1</span><span style="color:#3A3D4D">}</span></span>
+    </div>
+    <div class="chip" style="color: #1C7A4B;">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6.2"/><path d="M5.4 8.2 7.2 10l3.4-3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Identical · 0 changes
+    </div>
+    <div style="flex: 1;"></div>
+    <span style="font-size: 11px; color: #63687C; max-width: 400px; line-height: 1.4;">Identity-key
+      matching pairs records by <span class="mono">id</span>, so a reordered array is not 32 changes.</span>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":1280,"height":836}}'>
+// Row tints. The design requires added to be the LIGHTER of the added/removed pair, because
+// measured contrast between the four diff colours is 1.00-1.10 in every vision model -- tint
+// lightness is a third carrier alongside the glyph and the gutter sign.
+const TINT = { add: '#EDF7F1', rem: '#F4DEDE', mod: '#F7EEE0', typ: '#EDE9F8', none: 'transparent' };
+const INK  = { add: '#1C7A4B', rem: '#C22E2E', mod: '#8C4700', typ: '#5B44C8', none: '#55596A' };
+const GLYPH = { add: '+︎', rem: '−', mod: '✎', typ: '⇄', none: '' };
+const SIGN = { add: '+', rem: '−', mod: '', typ: '', none: '' };
+
+class Component extends DCLogic {
+  rows(spec) {
+    return spec.map(([n, kind, text]) => ({
+      n: n === null ? '' : String(n),
+      sign: SIGN[kind],
+      glyph: GLYPH[kind],
+      ink: INK[kind],
+      textInk: kind === 'none' ? '#3A3D4D' : INK[kind],
+      bg: TINT[kind],
+      text
+    }));
+  }
+
+  renderVals() {
+    const left = this.rows([
+      [24, 'none', '    {'],
+      [25, 'none', '      "id": "dev-001",'],
+      [26, 'mod',  '      "firmware": "4.11.2",'],
+      [27, 'rem',  '      "battery": 0.87,'],
+      [28, 'none', '      "online": true,'],
+      [29, 'none', '      "sensors": {'],
+      [30, 'none', '        "temperature": { "value": -18.4 },'],
+      [31, 'typ',  '        "humidity": { "value": 41 },'],
+      [32, 'none', '        "door": { "open": false }'],
+      [33, 'none', '      },'],
+      [null, 'none', '      — no matching property —'],
+      [null, 'none', '      — no matching property —'],
+      [34, 'none', '      "telemetry": [-18.4, -18.3, …],'],
+      [35, 'mod',  '      "alerts": [ … 2 items ]'],
+      [36, 'none', '    },'],
+      [37, 'none', '    {'],
+      [38, 'none', '      "id": "dev-002",'],
+      [39, 'mod',  '      "firmware": "4.9.0",'],
+      [40, 'rem',  '      "battery": null,']
+    ]);
+
+    const right = this.rows([
+      [24, 'none', '    {'],
+      [25, 'none', '      "id": "dev-001",'],
+      [26, 'mod',  '      "firmware": "4.12.0",'],
+      [null, 'none', '      — no matching property —'],
+      [27, 'none', '      "online": true,'],
+      [28, 'none', '      "sensors": {'],
+      [29, 'none', '        "temperature": { "value": -18.4 },'],
+      [30, 'typ',  '        "humidity": { "value": "41" },'],
+      [31, 'none', '        "door": { "open": false }'],
+      [32, 'none', '      },'],
+      [33, 'add',  '      "maintenanceDue": "2026-09-02",'],
+      [34, 'add',  '      "technician": "M. Ferreira",'],
+      [35, 'none', '      "telemetry": [-18.4, -18.3, …],'],
+      [36, 'mod',  '      "alerts": [ … 3 items ]'],
+      [37, 'none', '    },'],
+      [38, 'none', '    {'],
+      [39, 'none', '      "id": "dev-002",'],
+      [40, 'mod',  '      "firmware": "4.11.2",'],
+      [null, 'none', '      — no matching property —']
+    ]);
+
+    return { left, right };
+  }
+}
+</script>
+</body>
+</html>

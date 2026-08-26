@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; background: #E9E9EF; font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; }
+    a { color: #5B44C8; } a:hover { color: #4A37A8; }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+    .tab  { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 5px 12px 4px;
+            border-radius: 6px; color: #63687C; }
+    .tab.on { background: rgba(91,68,200,.12); color: #5B44C8; }
+    .tab span { font-size: 11px; }
+    .lbl  { width: 128px; flex: none; text-align: right; font-size: 13px; color: #1C1D22; }
+    .hint { font-size: 11px; color: #63687C; line-height: 1.45; }
+    .seg  { display: flex; padding: 2px; border-radius: 6px; background: rgba(20,21,26,.06); gap: 2px; }
+    .seg > div { font-size: 12px; line-height: 20px; padding: 0 11px; border-radius: 5px; color: #63687C; }
+    .seg > div.on { background: #FFFFFF; color: #1C1D22; box-shadow: 0 0 0 .5px rgba(20,21,26,.13); }
+    .cb   { width: 14px; height: 14px; border-radius: 4px; border: 1px solid rgba(20,21,26,.28);
+            background: #FFFFFF; flex: none; }
+    .cb.on { background: #5B44C8; border-color: #5B44C8; display: flex; align-items: center; justify-content: center; }
+    .stp  { display: flex; align-items: center; border: 1px solid rgba(20,21,26,.20); border-radius: 6px;
+            background: #FFFFFF; overflow: hidden; }
+    .stp > span { font-size: 12px; color: #1C1D22; padding: 3px 9px; font-variant-numeric: tabular-nums; }
+    .opt  { display: flex; align-items: center; gap: 7px; font-size: 13px; color: #1C1D22; }
+  </style>
+</helmet>
+
+<div style="width: 660px; height: 580px; display: flex; align-items: center; justify-content: center;">
+  <div style="width: 620px; height: 540px; border-radius: 10px; overflow: hidden; background: #F2F2F6;
+              box-shadow: 0 24px 60px rgba(0,0,0,.28), 0 0 0 .5px rgba(0,0,0,.16);
+              display: flex; flex-direction: column;">
+
+    <div style="flex: none; background: #ECECF0; border-bottom: 1px solid rgba(20,21,26,.13); padding: 8px 12px 6px;">
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f57;"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: rgba(20,21,26,.16);"></span>
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: rgba(20,21,26,.16);"></span>
+      </div>
+
+      <div style="display: flex; justify-content: center; gap: 2px;">
+        <div class="tab">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25">
+            <circle cx="8" cy="8" r="2.2"/>
+            <path d="M8 1.6v1.8M8 12.6v1.8M1.6 8h1.8M12.6 8h1.8M3.5 3.5l1.3 1.3M11.2 11.2l1.3 1.3M12.5 3.5l-1.3 1.3M4.8 11.2l-1.3 1.3" stroke-linecap="round"/>
+          </svg>
+          <span>General</span>
+        </div>
+        <div class="tab on">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25">
+            <path d="M5.5 4.5 2.5 8l3 3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M10.5 4.5 13.5 8l-3 3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9.2 3.2 6.8 12.8" stroke-linecap="round"/>
+          </svg>
+          <span>Editor</span>
+        </div>
+        <div class="tab">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25">
+            <path d="M2.5 3.5h11M5 6.5h8.5M5 9.5h6.5M2.5 12.5h11" stroke-linecap="round"/>
+          </svg>
+          <span>Formatting</span>
+        </div>
+        <div class="tab">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25">
+            <circle cx="8" cy="8" r="5.6"/>
+            <path d="M8 2.4a5.6 5.6 0 0 1 0 11.2z" fill="currentColor" stroke="none"/>
+          </svg>
+          <span>Appearance</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex: 1; padding: 22px 24px; display: flex; flex-direction: column; gap: 16px; overflow: hidden;">
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="lbl">Font size:</div>
+        <div class="stp">
+          <span>12 pt</span>
+          <span style="width: 1px; align-self: stretch; background: rgba(20,21,26,.20); padding: 0;"></span>
+          <div style="display: flex; flex-direction: column;">
+            <div style="padding: 0 6px; line-height: 11px;">
+              <svg width="8" height="6" viewBox="0 0 8 6" fill="none" stroke="#3A3D4D" stroke-width="1.2"><path d="M1.5 4 4 1.5 6.5 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div style="height: 1px; background: rgba(20,21,26,.20);"></div>
+            <div style="padding: 0 6px; line-height: 11px;">
+              <svg width="8" height="6" viewBox="0 0 8 6" fill="none" stroke="#3A3D4D" stroke-width="1.2"><path d="M1.5 2 4 4.5 6.5 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="hint">SF Mono · 10–18</div>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="lbl">Indentation:</div>
+        <div class="seg">
+          <div class="on">2 spaces</div>
+          <div>4 spaces</div>
+          <div>Tab</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <div class="lbl" style="padding-top: 1px;">Editing:</div>
+        <div style="display: flex; flex-direction: column; gap: 9px;">
+          <sc-for list="{{ options }}" as="o" hint-placeholder-count="6">
+            <div class="opt">
+              <div class="cb {{ o.cls }}">
+                <sc-if value="{{ o.on }}" hint-placeholder-val="{{ true }}">
+                  <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="#FFFFFF" stroke-width="1.7"><path d="M1.8 5.2 3.9 7.3 8.2 2.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </sc-if>
+              </div>
+              <span>{{ o.label }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="height: 1px; background: rgba(20,21,26,.13); margin: 0 -24px;"></div>
+
+      <div style="display: flex; gap: 10px; align-items: flex-start;">
+        <div class="lbl" style="padding-top: 2px;">Validation:</div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 9px;">
+            <div class="stp"><span>150 ms</span></div>
+            <span style="font-size: 13px; color: #1C1D22;">after the last keystroke</span>
+          </div>
+          <div class="hint" style="max-width: 380px; margin-top: 4px;">Parsing runs off the main thread
+            and cancels when you keep typing, so the tree never blanks mid-edit.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":660,"height":580}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const options = [
+      ['Close brackets and quotes automatically', 1],
+      ['Indent new lines automatically', 1],
+      ['Highlight the current line', 1],
+      ['Highlight matching brackets', 1],
+      ['Wrap long lines', 0],
+      ['Show invisible characters', 0]
+    ].map(([label, on]) => ({ label, on: !!on, cls: on ? 'on' : '' }));
+    return { options };
+  }
+}
+</script>
+</body>
+</html>

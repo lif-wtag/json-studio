@@ -1,0 +1,200 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; background: #E9E9EF; font-family: -apple-system, "SF Pro Text", system-ui, sans-serif; }
+    a { color: #5B44C8; } a:hover { color: #4A37A8; }
+    .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+    .cap { font-size: 11px; font-weight: 600; color: #63687C; text-transform: uppercase; letter-spacing: .06em; }
+    .tab { flex: 1; text-align: center; font-size: 12px; line-height: 20px; border-radius: 5px; color: #63687C; }
+    .tab.on { background: #FFFFFF; color: #1C1D22; box-shadow: 0 0 0 .5px rgba(20,21,26,.13); }
+    .pane { background: #F2F2F6; border: 1px solid rgba(20,21,26,.13); border-radius: 8px;
+            overflow: hidden; display: flex; flex-direction: column; }
+    .row { display: flex; align-items: center; gap: 4px; height: 21px; padding-right: 6px; border-radius: 6px; }
+    .btn { font-size: 12px; color: #1C1D22; background: #FBFBFD; border: 1px solid rgba(20,21,26,.16);
+           border-radius: 6px; padding: 4px 9px; text-align: center; }
+    .mi  { font-size: 13px; color: #1C1D22; padding: 5px 10px; border-radius: 5px; }
+    .mi.sel { background: #5B44C8; color: #FFFFFF; }
+    .fld { display: flex; flex-direction: column; gap: 3px; }
+  </style>
+</helmet>
+
+<div style="width: 680px; height: 836px; box-sizing: border-box; padding: 28px 28px 22px;
+            display: flex; flex-direction: column; gap: 16px;">
+
+  <div style="display: flex; gap: 44px; align-items: flex-start;">
+
+    <!-- Tree at the 280pt default, with the node context menu open -->
+    <div style="width: 280px;">
+      <div class="cap" style="margin-bottom: 7px;">Tree · 280pt default</div>
+      <div class="pane" style="width: 280px; height: 646px; position: relative;">
+        <div style="padding: 8px; border-bottom: 1px solid rgba(20,21,26,.13);">
+          <div style="display: flex; padding: 2px; border-radius: 6px; background: rgba(20,21,26,.06); gap: 2px;">
+            <div class="tab on">Tree</div>
+            <div class="tab">Info</div>
+            <!-- Statistics is IN-09 / Phase 4: visible and disabled, per tokens.md §5 -->
+            <div class="tab" style="color: rgba(99,104,124,.45);">Statistics</div>
+          </div>
+        </div>
+
+        <div style="padding: 8px 8px 4px; display: flex; align-items: center; justify-content: space-between;">
+          <span class="cap">Structure</span>
+          <span class="mono" style="font-size: 11px; color: #63687C;">depth 7</span>
+        </div>
+
+        <div style="flex: 1; padding: 0 4px;">
+          <sc-for list="{{ tree }}" as="n" hint-placeholder-count="24">
+            <div class="row" style="padding-left: {{ n.pad }}px; background: {{ n.bg }}; box-shadow: {{ n.ring }};">
+              <span class="mono" style="font-size: 9px; width: 9px; color: #63687C;">{{ n.arrow }}</span>
+              <span class="mono" style="font-size: 10px; width: 14px; color: {{ n.iconColor }};">{{ n.icon }}</span>
+              <span class="mono" style="font-size: 11px; color: #1C1D22; white-space: nowrap;">{{ n.key }}</span>
+              <div style="flex: 1; min-width: 4px;"></div>
+              <span class="mono" style="font-size: 11px; color: {{ n.valColor }}; white-space: nowrap;
+                          overflow: hidden; text-overflow: ellipsis; max-width: 104px; text-align: right;
+                          font-variant-numeric: tabular-nums;">{{ n.val }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- Persistent path bar — the design keeps the full path visible, not only in Info -->
+        <div style="padding: 8px 10px; border-top: 1px solid rgba(20,21,26,.13); display: flex;
+                    align-items: center; gap: 6px;">
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#63687C" stroke-width="1.3" style="flex: none;"><rect x="5.5" y="5.5" width="8" height="8" rx="1.4"/><path d="M10.5 2.5h-7A1 1 0 0 0 2.5 3.5v7"/></svg>
+          <span class="mono" style="font-size: 11px; color: #63687C; overflow: hidden;
+                      text-overflow: ellipsis; white-space: nowrap;">$.devices[0].coordinates.last.altitude.reference.datum</span>
+        </div>
+
+        <!-- Context menu — glass, permitted (ADR-08) -->
+        <div style="position: absolute; left: 104px; top: 396px; width: 190px; border-radius: 8px;
+                    background: rgba(250,250,253,.74); backdrop-filter: saturate(180%) blur(28px);
+                    border: 1px solid rgba(255,255,255,.7);
+                    box-shadow: 0 14px 34px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.9); padding: 4px;">
+          <div class="mi sel">Copy Value</div>
+          <div class="mi">Copy Key</div>
+          <div class="mi">Copy Path</div>
+          <div class="mi">Copy Subtree as JSON</div>
+          <div style="height: 1px; background: rgba(20,21,26,.12); margin: 4px 8px;"></div>
+          <div class="mi">Expand</div>
+          <div class="mi">Collapse</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info at the 240pt MINIMUM — the readability floor -->
+    <div style="width: 240px;">
+      <div class="cap" style="margin-bottom: 7px;">Info · 240pt minimum</div>
+      <div class="pane" style="width: 240px; height: 646px;">
+        <div style="padding: 8px; border-bottom: 1px solid rgba(20,21,26,.13);">
+          <div style="display: flex; padding: 2px; border-radius: 6px; background: rgba(20,21,26,.06); gap: 2px;">
+            <div class="tab">Tree</div>
+            <div class="tab on">Info</div>
+            <div class="tab" style="color: rgba(99,104,124,.45);">Statistics</div>
+          </div>
+        </div>
+
+        <div style="padding: 12px; display: flex; flex-direction: column; gap: 13px;">
+          <div class="fld">
+            <span class="cap">Key</span>
+            <span class="mono" style="font-size: 12px; color: #1C1D22;">datum</span>
+          </div>
+
+          <div class="fld">
+            <span class="cap">Type</span>
+            <div style="display: flex; align-items: center; gap: 5px;">
+              <span class="mono" style="font-size: 11px; color: #0A6551;">""</span>
+              <span style="font-size: 12px; color: #1C1D22;">String</span>
+            </div>
+          </div>
+
+          <div class="fld">
+            <span class="cap">Value</span>
+            <span class="mono" style="font-size: 12px; color: #0A6551; word-break: break-all;">"WGS84"</span>
+          </div>
+
+          <div class="fld">
+            <span class="cap">Path</span>
+            <!-- the deepest path in the fixture, wrapping rather than truncating -->
+            <span class="mono" style="font-size: 11px; color: #3A3D4D; line-height: 1.5;
+                        background: rgba(20,21,26,.04); border-radius: 6px; padding: 6px 7px;
+                        word-break: break-all;">$.devices[0].coordinates.last.altitude.reference.datum</span>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 5px;">
+            <div class="btn">Copy Value</div>
+            <div style="display: flex; gap: 5px;">
+              <div class="btn" style="flex: 1;">Copy Key</div>
+              <div class="btn" style="flex: 1;">Copy Path</div>
+            </div>
+          </div>
+
+          <div style="height: 1px; background: rgba(20,21,26,.13);"></div>
+
+          <div class="fld">
+            <span class="cap">Span</span>
+            <span style="font-size: 11px; color: #3A3D4D; line-height: 1.6; font-variant-numeric: tabular-nums;">Line 36, column 78 – 85<br>Offset 1284 – 1291 (UTF-16)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="font-size: 11px; color: #63687C; line-height: 1.55;">
+    Keys hold at 240pt; values truncate — correct, since the value is the editor's job and the
+    tree's job is the path. Below 240 the value column would have to drop entirely, which is why
+    240 is the floor. Selecting a node scrolls the editor to its span; moving the caret selects the
+    innermost containing node. VoiceOver reads name, type, value and depth.
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":680,"height":836}}'>
+const ICON = { obj: '{}', arr: '[]', str: '""', num: '#', bool: '◑', null: '○' };
+class Component extends DCLogic {
+  renderVals() {
+    const dim = '#63687C';
+    const tree = [
+      [0, 'obj',  '$',             '6 keys', 1],
+      [1, 'obj',  'account',       '7 keys', 1],
+      [2, 'str',  'note',          '"Wichtiger Hinweis für den Betrieb…"', 0],
+      [2, 'arr',  'tags',          '5 items', 2],
+      [2, 'null', 'billing',       'null', 0],
+      [1, 'arr',  'devices',       '2 items', 1],
+      [2, 'obj',  '[0]',           '9 keys', 1],
+      [3, 'str',  'id',            '"dev-001"', 0],
+      [3, 'bool', 'online',        'true', 0],
+      [3, 'obj',  'coordinates',   '2 keys', 1],
+      [4, 'obj',  'last',          '4 keys', 1],
+      [5, 'num',  'lat',           '52.520008', 0],
+      [5, 'num',  'lon',           '13.404954', 0],
+      [5, 'obj',  'accuracy',      '3 keys', 2],
+      [5, 'obj',  'altitude',      '3 keys', 1],
+      [6, 'num',  'value',         '34.2', 0],
+      [6, 'obj',  'reference',     '1 key', 1],
+      [7, 'str',  'datum',         '"WGS84"', 0, 1],
+      [4, 'arr',  'history',       '0 items', 0],
+      [3, 'obj',  'sensors',       '3 keys', 2],
+      [3, 'arr',  'telemetry',     '32 items', 2],
+      [2, 'obj',  '[1]',           '9 keys', 2],
+      [1, 'obj',  'summary',       '7 keys', 2]
+    ].map(([d, kind, key, val, state, sel]) => ({
+      pad: 6 + d * 13,
+      arrow: state === 1 ? '⌄' : state === 2 ? '›' : '',
+      icon: ICON[kind],
+      iconColor: sel ? '#5B44C8' : dim,
+      key, val,
+      valColor: sel ? '#1C1D22' : dim,
+      bg: sel ? 'rgba(91,68,200,.12)' : 'transparent',
+      ring: sel ? 'inset 0 0 0 1px rgba(91,68,200,.42)' : 'none'
+    }));
+    return { tree };
+  }
+}
+</script>
+</body>
+</html>

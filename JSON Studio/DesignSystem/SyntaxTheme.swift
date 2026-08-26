@@ -3,34 +3,47 @@ import SwiftUI
 /// The syntax highlighting palette and the six diff/validation semantics.
 ///
 /// **This is the only file where literal hex colours are allowed** (locked decision #9).
-/// Values are authored in `Design/tokens.md`; every `contrastRatio` below is the *measured*
-/// worst applicable case, computed by `Design/palette-measure.py`. Re-run that script after any
-/// change here — it fails loudly.
+/// Values come from the approved Claude Design project ("JSON Studio — Run 1"), reconciled in
+/// `Design/tokens.md`, which is the specification and wins on any disagreement. Every
+/// `contrastRatio` is *measured* by `Design/palette-measure.py` — re-run it after any change here,
+/// it fails loudly.
 ///
-/// The palette obeys one rule that shapes everything: **syntax lives in the cool arc
-/// (144°–264°); warm hues are reserved for diagnostics.** Object keys are blue, the scalar types
-/// fan across the cool arc so a type change is visible without reading the token, and structure
-/// is achromatic. The consequence is the point — any warm pixel in the editor means something is
-/// wrong, so an error marker is the only warm thing on screen and needs no hunting.
+/// The design's hue logic: structure — keys, braces, punctuation — stays on the blurple-to-neutral
+/// axis, and the leaf types fan away from it by distance from "text": strings green-teal, numbers
+/// amber, booleans magenta, null a chroma-free grey. A wall of quoted values therefore separates
+/// from its keys by hue rather than by weight, and no two adjacent types share a neighbourhood.
+///
+/// Six values here differ from the design. The design's own current-line and selection washes
+/// dropped four tokens below 4.5:1 (punctuation reached 3.39 in dark), and a wash sits under text.
+/// Each fix moves lightness only — hue drift is ≤1.6° — so the grammar logic is untouched.
+/// `Design/tokens.md` §3 records each one.
 struct SyntaxTheme: Sendable {
 
-    /// A syntax token colour with its measured contrast ratio.
+    /// A colour with its measured contrast ratio.
     ///
-    /// `contrastRatio` is the **worst applicable case**: the lower of the ratio against the plain
-    /// editor background and against every background wash that can sit under this token. That is
-    /// the only figure that matters, since text is unreadable at its worst position, not its best.
+    /// `contrastRatio` is the **worst applicable case**: the lowest ratio across the bare editor
+    /// ground and every wash this token can actually sit under. Text is unreadable at its worst
+    /// position, not its best.
     struct TokenColor: Sendable {
         var light: Color
         var dark: Color
-        /// Worst applicable measured ratio. Text ≥ 4.5, non-text indicators ≥ 3.
+        /// Worst measured ratio. Text ≥ 4.5; non-text indicators ≥ 3.
         var contrastRatio: Double
-        /// `true` where the token also carries a non-colour distinction (see `null`).
+        /// Set where the token carries a second, non-colour distinction — see `null`.
         var isItalic: Bool = false
 
         func color(for scheme: ColorScheme) -> Color {
             scheme == .dark ? dark : light
         }
     }
+
+    // MARK: - Grounds
+
+    /// The editor ground. **Not `textBackgroundColor`** — a blue-grey at 4% chroma in dark,
+    /// an off-white in light. Every ratio in this file is measured against it, which is why it
+    /// cannot be swapped for the semantic colour without re-measuring the whole palette.
+    /// `Design/tokens.md` §7 FLAG-1 — needs an ADR before Phase 3b.
+    var editorGround: TokenColor
 
     // MARK: - Syntax tokens
 
@@ -42,59 +55,67 @@ struct SyntaxTheme: Sendable {
     var bracket: TokenColor
     var punctuation: TokenColor
 
-    // MARK: - Background washes
+    // MARK: - Washes
 
-    /// Washes are held to a different standard than text: subtle enough not to fight the text on
-    /// top of them. `contrastRatio` here is measured against the editor background, and the
-    /// requirement is a ceiling, not a floor.
+    /// Spans the whole line, so every token must stay readable on it.
     var currentLineBackground: TokenColor
+    /// A 1px edge the design pairs with the current-line fill.
+    var currentLineEdge: TokenColor
     var selectionBackground: TokenColor
+    /// Scoped to a matched span, not the line — so only keys and strings sit on it.
     var searchMatchBackground: TokenColor
-    /// Deliberately stronger than the other washes — it only ever sits under a bracket glyph,
-    /// which is the highest-contrast token in the palette.
-    var matchedBracketBackground: TokenColor
+    var activeMatchBackground: TokenColor
+    /// The active match's ring carries "this one" in dark mode, where a heavier fill would
+    /// fight the light text on it.
+    var activeMatchRing: TokenColor
+    /// A **1px ring**, not a fill — so it never sits under text.
+    var matchedBracketRing: TokenColor
 
-    // MARK: - Diagnostic indicators
+    // MARK: - Diagnostics
 
-    /// Exempt from the chroma gate by design: Phase 0 established the error experience as the
-    /// product, and a desaturated error marker is a worse error marker.
+    /// Chroma-exempt by design: a desaturated error marker is a worse error marker.
     var errorUnderline: TokenColor
-    var warningUnderline: TokenColor
+    /// Light sits exactly on the 3:1 floor (3.00) — do not darken the light ground beneath it.
     var foldMarker: TokenColor
 
-    /// The shipping palette. Light and dark were designed independently — dark is not an
-    /// inversion of light.
+    /// The shipping palette. Light and dark were authored independently; dark is not an inversion.
     static let standard = SyntaxTheme(
-        objectKey:   .init(light: .init(hex: 0x0B4FA8), dark: .init(hex: 0x7FB0F0), contrastRatio: 5.34),
-        string:      .init(light: .init(hex: 0x0F6E3D), dark: .init(hex: 0x5FC98A), contrastRatio: 4.60),
-        number:      .init(light: .init(hex: 0x63409C), dark: .init(hex: 0xC2A0F5), contrastRatio: 5.50),
-        boolean:     .init(light: .init(hex: 0x04606E), dark: .init(hex: 0x5CC8D8), contrastRatio: 5.25),
-        // Achromatic *and* italic, so it is distinguishable from punctuation without colour.
-        null:        .init(light: .init(hex: 0x5C5C5C), dark: .init(hex: 0xA4A4A4), contrastRatio: 4.80, isItalic: true),
-        bracket:     .init(light: .init(hex: 0x1F1F1F), dark: .init(hex: 0xE8E8E8), contrastRatio: 7.29),
-        punctuation: .init(light: .init(hex: 0x5A5A5A), dark: .init(hex: 0xB0B0B0), contrastRatio: 5.01),
+        editorGround: .init(light: .init(hex: 0xF7F7FA), dark: .init(hex: 0x161826), contrastRatio: 1),
 
-        currentLineBackground:   .init(light: .init(hex: 0xF2F4F7), dark: .init(hex: 0x282A2E), contrastRatio: 1.16),
-        selectionBackground:     .init(light: .init(hex: 0xCCDDF7), dark: .init(hex: 0x2C3749), contrastRatio: 1.39),
-        searchMatchBackground:   .init(light: .init(hex: 0xFFE9A8), dark: .init(hex: 0x3F361A), contrastRatio: 1.39),
-        matchedBracketBackground: .init(light: .init(hex: 0xD6E4FA), dark: .init(hex: 0x3A4A66), contrastRatio: 1.87),
+        objectKey:   .init(light: .init(hex: 0x5B44C8), dark: .init(hex: 0xB3A8F0), contrastRatio: 4.54),
+        string:      .init(light: .init(hex: 0x0A6551), dark: .init(hex: 0x6ED3AE), contrastRatio: 4.72),
+        number:      .init(light: .init(hex: 0x8C4700), dark: .init(hex: 0xEFB275), contrastRatio: 4.68),
+        boolean:     .init(light: .init(hex: 0x9C2F72), dark: .init(hex: 0xE79AC9), contrastRatio: 4.61),
+        // Achromatic *and* italic, so it separates from punctuation — also achromatic — without colour.
+        null:        .init(light: .init(hex: 0x55596C), dark: .init(hex: 0x9EA6BE), contrastRatio: 4.65, isItalic: true),
+        bracket:     .init(light: .init(hex: 0x3A3D4D), dark: .init(hex: 0xCBCFE0), contrastRatio: 7.22),
+        punctuation: .init(light: .init(hex: 0x55596A), dark: .init(hex: 0xA1A6BA), contrastRatio: 4.66),
 
-        errorUnderline:   .init(light: .init(hex: 0xC4162A), dark: .init(hex: 0xFF6B7A), contrastRatio: 6.01),
-        warningUnderline: .init(light: .init(hex: 0x8A5A00), dark: .init(hex: 0xE0A64A), contrastRatio: 5.93),
-        foldMarker:       .init(light: .init(hex: 0x767676), dark: .init(hex: 0x9A9A9A), contrastRatio: 4.54)
+        currentLineBackground: .init(light: .init(hex: 0xEFEFF5), dark: .init(hex: 0x1D2033), contrastRatio: 1.07),
+        currentLineEdge:       .init(light: .init(hex: 0xDEDEE8), dark: .init(hex: 0x2A2E45), contrastRatio: 1.25),
+        selectionBackground:   .init(light: .init(hex: 0xCBD3F0), dark: .init(hex: 0x2E3768), contrastRatio: 1.39),
+        // Composited from the design's alpha fills at the opacities recorded in tokens.md §3.
+        searchMatchBackground: .init(light: .init(hex: 0xF1E4B4), dark: .init(hex: 0x3A3428), contrastRatio: 1.19),
+        activeMatchBackground: .init(light: .init(hex: 0xF3CF90), dark: .init(hex: 0x4A412F), contrastRatio: 1.39),
+        activeMatchRing:       .init(light: .init(hex: 0xA85A00), dark: .init(hex: 0xF0C24A), contrastRatio: 4.76),
+        matchedBracketRing:    .init(light: .init(hex: 0x6E5FD8), dark: .init(hex: 0x8C86D6), contrastRatio: 4.58),
+
+        errorUnderline: .init(light: .init(hex: 0xC22E2E), dark: .init(hex: 0xF2705E), contrastRatio: 5.27),
+        foldMarker:     .init(light: .init(hex: 0x8A8FA3), dark: .init(hex: 0x8B92AC), contrastRatio: 3.00)
     )
 }
 
-/// The six validation/diff semantics. Each is colour **plus** SF Symbol **plus** text label.
+/// The six validation/diff semantics.
 ///
-/// Colour is the weakest of the three channels and never carries a state alone (locked decision
-/// #10). This is not belt-and-braces: measured worst-case contrast *between* the four diff
-/// colours is 1.00–1.12 across normal, deuteranopic, protanopic, and grayscale vision. Four
-/// colours all holding 4.5:1 against one background are necessarily close in luminance, so they
-/// cannot also be far apart from each other. Better hex values cannot fix this — the glyph and
-/// the label are the signal, and the colour is recognition speed for readers who can use it.
+/// Each carries colour **plus** SF Symbol **plus** label, and the diff four additionally carry a
+/// gutter sign and row-tint lightness. That triple redundancy is not belt-and-braces: measured
+/// worst-case contrast *between* the four diff colours is 1.00–1.10 across normal, deuteranopic,
+/// protanopic and grayscale vision. Four colours all holding 4.5:1 against one ground are
+/// necessarily close in luminance, so they cannot also be far from each other. No choice of hex
+/// fixes it — the design reached the same conclusion, which is why it specifies three carriers.
 ///
-/// The glyphs were chosen to differ in *silhouette* for the same reason.
+/// The design reuses syntax hues here: `diffModified` is the number amber, `diffTypeChanged` the
+/// object-key blurple, and added/removed the valid/invalid pair.
 enum Semantic: String, CaseIterable, Sendable {
     case valid
     case invalid
@@ -103,59 +124,136 @@ enum Semantic: String, CaseIterable, Sendable {
     case diffModified
     case diffTypeChanged
 
-    /// Never abbreviate and never hide these, at any window width or density setting.
+    /// Never abbreviate and never hide these, at any window width or density.
+    ///
+    /// `invalid` and `diffTypeChanged` are dynamic in the design — the label states the error
+    /// count and location, and names the actual type transition. These are the fallbacks used
+    /// when no detail is available; prefer `label(detail:)`.
     var label: String {
         switch self {
         case .valid: "Valid JSON"
         case .invalid: "Invalid JSON"
         case .diffAdded: "Added"
         case .diffRemoved: "Removed"
-        case .diffModified: "Modified"
+        case .diffModified: "Changed"
         case .diffTypeChanged: "Type changed"
+        }
+    }
+
+    /// The design's labels for these two states name specifics rather than categories:
+    /// "1 error · line 10" and "string → number".
+    func label(detail: String?) -> String {
+        guard let detail, !detail.isEmpty else { return label }
+        switch self {
+        case .invalid, .diffTypeChanged: return detail
+        default: return label
         }
     }
 
     var symbol: String {
         switch self {
-        case .valid: "checkmark.circle.fill"
-        case .invalid: "exclamationmark.triangle.fill"
-        case .diffAdded: "plus.circle.fill"
-        case .diffRemoved: "minus.circle.fill"
-        case .diffModified: "pencil.circle.fill"
-        case .diffTypeChanged: "arrow.2.squarepath"
+        case .valid: "checkmark.circle"
+        case .invalid: "exclamationmark.triangle"
+        case .diffAdded: "plus.square"
+        case .diffRemoved: "minus.square"
+        case .diffModified: "pencil.line"
+        case .diffTypeChanged: "arrow.triangle.swap"
         }
     }
 
-    /// Measured ≥ 4.5:1 against its mode's background as label text (light 6.01–7.78,
-    /// dark 6.06–8.80).
+    /// The gutter sign for diff rows — a third carrier, independent of both colour and glyph.
+    var gutterSign: String? {
+        switch self {
+        case .diffAdded: "+"
+        case .diffRemoved: "\u{2212}"   // minus sign, not hyphen
+        default: nil
+        }
+    }
+
+    /// Measured ≥4.5:1 against its mode's ground as label text (light 4.99–6.51, dark 6.08–9.47).
     func color(for scheme: ColorScheme) -> Color {
         let (light, dark): (UInt32, UInt32) = switch self {
-        case .valid:           (0x0F6E3D, 0x5FC98A)
-        case .invalid:         (0xC4162A, 0xFF6B7A)
-        case .diffAdded:       (0x1A6B33, 0x6ED08F)
-        case .diffRemoved:     (0xA8102A, 0xFF8A94)
-        case .diffModified:    (0x0B4FA8, 0x7FB0F0)
-        case .diffTypeChanged: (0x8A4B00, 0xE0A64A)
+        case .valid:           (0x1C7A4B, 0x5FD39B)
+        case .invalid:         (0xC22E2E, 0xF2705E)
+        case .diffAdded:       (0x1C7A4B, 0x5FD39B)
+        case .diffRemoved:     (0xC22E2E, 0xF2705E)
+        case .diffModified:    (0x8C4700, 0xEFB275)
+        case .diffTypeChanged: (0x5B44C8, 0xB3A8F0)
         }
         return Color(hex: scheme == .dark ? dark : light)
     }
 }
 
-/// A semantic rendered as all three channels at once. Use this rather than reaching for
-/// `Semantic.color` directly — it makes the colour-independence rule the path of least resistance.
+/// A semantic rendered as every channel at once. Prefer this over reaching for `Semantic.color`
+/// directly — it makes the colour-independence rule the path of least resistance rather than a
+/// review checklist item.
 struct SemanticBadge: View {
     let semantic: Semantic
+    /// Supplies the dynamic text for `invalid` and `diffTypeChanged`.
+    var detail: String? = nil
+    /// Diff rows show the gutter sign; status-bar states do not.
+    var showsGutterSign: Bool = false
+
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
-        Label {
-            Text(semantic.label)
-        } icon: {
+        let text = semantic.label(detail: detail)
+        HStack(spacing: Tokens.Spacing.xs) {
+            if showsGutterSign, let sign = semantic.gutterSign {
+                Text(sign)
+                    .font(Tokens.Typography.gutterNumber)
+                    .accessibilityHidden(true)
+            }
             Image(systemName: semantic.symbol)
+            Text(text)
         }
         .font(Tokens.Typography.uiSecondary)
         .foregroundStyle(semantic.color(for: scheme))
-        .accessibilityLabel(semantic.label)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+    }
+}
+
+/// The tree's per-node type affordance: SF Symbol plus the matching syntax colour.
+///
+/// Maps the design's Phosphor prototype icons onto SF Symbols. `array` is the one unfaithful
+/// mapping — SF Symbols has no square-bracket glyph. `Design/tokens.md` §5 records the
+/// alternative (literal `{}` / `[]` set in SF Mono); decide before Phase 3d.
+enum NodeKind: String, CaseIterable, Sendable {
+    case object, array, string, number, boolean, null
+
+    var symbol: String {
+        switch self {
+        case .object: "curlybraces"
+        case .array: "list.bullet.indent"
+        case .string: "quote.opening"
+        case .number: "number"
+        case .boolean: "switch.2"
+        case .null: "circle.dashed"
+        }
+    }
+
+    /// Spoken by VoiceOver alongside the node's name, value and depth.
+    var accessibilityName: String {
+        switch self {
+        case .object: "Object"
+        case .array: "Array"
+        case .string: "String"
+        case .number: "Number"
+        case .boolean: "Boolean"
+        case .null: "Null"
+        }
+    }
+
+    func color(for scheme: ColorScheme, theme: SyntaxTheme = .standard) -> Color {
+        let token = switch self {
+        case .object, .array: theme.bracket
+        case .string: theme.string
+        case .number: theme.number
+        case .boolean: theme.boolean
+        case .null: theme.null
+        }
+        return token.color(for: scheme)
     }
 }
 

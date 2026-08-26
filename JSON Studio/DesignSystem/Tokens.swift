@@ -2,16 +2,18 @@ import SwiftUI
 
 /// Design tokens — layout metrics, type scale, spacing, radii, state treatments.
 ///
-/// Authored in Phase 1; `Design/tokens.md` is the specification and wins on any disagreement.
-/// Per locked decision #9, literal hex survives ONLY in `SyntaxTheme.swift` — every colour here
-/// resolves to an AppKit semantic.
+/// Values come from the approved Claude Design project ("JSON Studio — Run 1"), reconciled in
+/// `Design/tokens.md`, which is the specification and wins on any disagreement. Per locked
+/// decision #9, literal hex survives ONLY in `SyntaxTheme.swift` — every colour here resolves to
+/// an AppKit semantic.
 enum Tokens {
 
-    // MARK: - Spacing (8pt grid)
+    // MARK: - Spacing
 
+    /// 8pt base grid, with 4pt for dense rows (tree, palette, status bar).
     enum Spacing {
-        /// The grid unit. Sizes below are multiples, except `xs`, the single sub-grid step.
         static let unit: CGFloat = 8
+        static let denseUnit: CGFloat = 4
 
         static let xxs: CGFloat = 2
         static let xs: CGFloat = 4
@@ -25,86 +27,123 @@ enum Tokens {
     // MARK: - Layout
 
     enum Layout {
-        /// 72 editor columns + gutter + insets + divider + `inspectorMinWidth`.
-        static let windowMinWidth: CGFloat = 880
-        /// Toolbar + 28 editor lines + status bar.
-        static let windowMinHeight: CGFloat = 560
-        static let windowDefaultWidth: CGFloat = 1180
-        static let windowDefaultHeight: CGFloat = 760
+        /// 640 when the inspector is collapsed.
+        static let windowMinWidth: CGFloat = 720
+        static let windowMinWidthInspectorCollapsed: CGFloat = 640
+        static let windowMinHeight: CGFloat = 480
+        /// The size every Run 1 artefact is drawn at.
+        static let windowDefaultWidth: CGFloat = 1280
+        static let windowDefaultHeight: CGFloat = 836
 
-        /// The width the Phase 3d inspector must stay readable at.
+        /// Below this the inspector must collapse rather than squeeze the editor.
+        static let editorMinWidth: CGFloat = 420
+
+        static let inspectorDefaultWidth: CGFloat = 280
+        /// The floor: below it the tree's value column would have to drop entirely.
         static let inspectorMinWidth: CGFloat = 240
-        static let inspectorIdealWidth: CGFloat = 320
-        /// Beyond this the editor drops under 72 columns at minimum window width.
-        static let inspectorMaxWidth: CGFloat = 480
+        static let inspectorMaxWidth: CGFloat = 400
 
-        /// 4 digits of `gutterNumber` + marker column + insets.
-        static let gutterMinWidth: CGFloat = 44
-        /// Added per digit beyond four, so the gutter grows with the document.
+        /// The design's documented deviation from a 44pt minimum: the fold caret sits left of a
+        /// two-digit number without crowding. Still grows with digit count.
+        static let gutterWidth: CGFloat = 48
         static let gutterDigitStep: CGFloat = 8
-        /// Reserved for error markers (3c) and fold arrows (P4).
-        static let gutterMarkerColumn: CGFloat = 10
+        static let gutterTrailingInset: CGFloat = 8
 
         static let toolbarHeight: CGFloat = 52
         static let statusBarHeight: CGFloat = 24
+        static let controlHeight: CGFloat = 26
+        static let searchFieldWidth: CGFloat = 208
 
-        static let editorLeadingInset: CGFloat = 12
         static let editorTopInset: CGFloat = 8
-        /// Integral by design: a fractional line height drifts against the ruler's rows.
-        static let editorLineHeight: CGFloat = 17
+        static let editorLeadingInset: CGFloat = 10
+        /// SF Mono 12 × 1.45. Fractional by design — the ruler must use the same value so its
+        /// rows stay locked to the text.
+        static let editorLineHeight: CGFloat = 17.4
+
+        static let treeRowHeight: CGFloat = 21
+        static let treeIndentPerLevel: CGFloat = 13
+        static let treeRowBaseInset: CGFloat = 6
+
+        /// Command palette (Phase 4 — SH-14). Metrics recorded now so the design need not be
+        /// re-derived later.
+        static let paletteWidth: CGFloat = 560
+        static let paletteRowHeight: CGFloat = 32
+        static let paletteTopOffset: CGFloat = 132
 
         static let dividerWidth: CGFloat = 1
+
+        /// Row inset for a tree node at the given depth.
+        static func treeInset(depth: Int) -> CGFloat {
+            treeRowBaseInset + CGFloat(depth) * treeIndentPerLevel
+        }
     }
 
     // MARK: - Radii
 
+    /// The design carries exactly two.
     enum Radius {
-        static let small: CGFloat = 4
-        static let medium: CGFloat = 6
-        static let large: CGFloat = 10
-        static let palette: CGFloat = 12
+        /// Toolbar pills, search field, segmented control, tree rows.
+        static let control: CGFloat = 6
+        /// Window, command palette, popovers, sheets.
+        static let surface: CGFloat = 10
     }
 
     // MARK: - Type
 
-    /// SF Pro Text for UI, SF Mono for editor content — and for any JSON fragment shown outside
-    /// the editor. A JSON value never renders in a proportional face.
+    /// SF Pro Text for UI, SF Mono for editor content — and for tree keys and values, all
+    /// figures in the status bar, and any JSON shown outside the editor.
     enum Typography {
         static let editorBodySize: CGFloat = 12
         static let gutterNumberSize: CGFloat = 11
 
-        /// Editor content. Follows the editor font preference, not Dynamic Type.
+        /// Follows the editor font preference, not Dynamic Type.
         static func editorBody(size: CGFloat = editorBodySize) -> Font {
             .system(size: size, weight: .regular, design: .monospaced)
         }
 
-        /// Tabular figures are mandatory: digits must not shift as line numbers change width.
+        /// Tabular figures are mandatory: digits must not shift as the gutter widens.
         static let gutterNumber = Font.system(
             size: gutterNumberSize, weight: .regular, design: .monospaced
         ).monospacedDigit()
 
         static let uiBody = Font.system(size: 13, weight: .regular)
+        /// The document title in the toolbar; the design sets it at weight 590.
+        static let uiTitle = Font.system(size: 13, weight: .semibold)
         static let uiSecondary = Font.system(size: 11, weight: .regular)
+        /// Uppercase, tracked 0.06em at the call site.
         static let uiSectionHeader = Font.system(size: 11, weight: .semibold)
 
-        static let treeRow = Font.system(size: 12, weight: .regular)
-        static let treeValue = Font.system(size: 12, weight: .regular, design: .monospaced)
+        /// The design sets tree keys and values in mono, not SF Pro.
+        static let treeKey = Font.system(size: 11, weight: .regular, design: .monospaced)
+        static let treeValue = Font.system(
+            size: 11, weight: .regular, design: .monospaced
+        ).monospacedDigit()
 
-        /// Tabular figures for counts, size, and cursor position.
-        static let statusBar = Font.system(size: 11, weight: .regular).monospacedDigit()
+        static let statusBarLabel = Font.system(size: 11, weight: .regular)
+        static let statusBarFigure = Font.system(
+            size: 11, weight: .regular, design: .monospaced
+        ).monospacedDigit()
+
+        static let paletteQuery = Font.system(size: 15, weight: .regular)
+        static let paletteRow = Font.system(size: 13, weight: .regular)
+        static let paletteShortcut = Font.system(size: 11, weight: .regular, design: .monospaced)
 
         static let errorTitle = Font.system(size: 13, weight: .semibold)
         static let errorBody = Font.system(size: 12, weight: .regular)
         static let errorExcerpt = Font.system(size: 12, weight: .regular, design: .monospaced)
+
+        /// Tracking for `uiSectionHeader`, in points at 11pt.
+        static let sectionHeaderTracking: CGFloat = 0.66
     }
 
     // MARK: - Semantic surfaces
 
-    /// Named so call sites read as intent rather than as an AppKit lookup. No literal hex here.
+    /// Named so call sites read as intent. No literal hex — the editor ground is the one
+    /// exception and it lives in `SyntaxTheme.editorGround` (see `Design/tokens.md` §7 FLAG-1).
     enum Surface {
         static let window = Color(nsColor: .windowBackgroundColor)
-        static let editor = Color(nsColor: .textBackgroundColor)
         static let control = Color(nsColor: .controlBackgroundColor)
+        static let field = Color(nsColor: .textBackgroundColor)
         static let divider = Color(nsColor: .separatorColor)
         static let listSelection = Color(nsColor: .selectedContentBackgroundColor)
     }
@@ -112,17 +151,37 @@ enum Tokens {
     // MARK: - State treatments
 
     enum State {
-        /// Hover applies to list rows only — text does not hover.
-        static let rowHoverOpacity: Double = 0.6
+        /// Accent fill and border for a selected tree row and the active inspector toggle.
+        static let accentFillOpacity: Double = 0.14
+        static let accentBorderOpacity: Double = 0.44
+        static let selectionRingWidth: CGFloat = 1
+
         static let disabledOpacity: Double = 0.5
 
-        /// Drag-over target: accent fill plus a border, never fill alone.
-        static let dragOverFillOpacity: Double = 0.12
-        static let dragOverBorderWidth: CGFloat = 2
-
-        /// Error underline is 2pt wavy; warnings are 1pt dotted, so the two differ in shape
-        /// as well as colour.
+        /// Error underline is 2pt wavy; warnings are 1pt dotted, so the two differ in shape as
+        /// well as colour.
         static let errorUnderlineWidth: CGFloat = 2
         static let warningUnderlineWidth: CGFloat = 1
+
+        /// 1px inset ring, not a fill — so it never sits under the bracket glyph's text.
+        static let matchedBracketRingWidth: CGFloat = 1
+
+        /// Overlay scroll indicator.
+        static let scrollIndicatorWidth: CGFloat = 8
+    }
+
+    // MARK: - Glass (ADR-08)
+
+    /// The middle rung of the fallback chain, from the design. `GlassBackground` owns the
+    /// gating; these are the `.regularMaterial` stand-in values for macOS 15 and earlier.
+    enum Glass {
+        static let blurRadius: CGFloat = 28
+        static let blurRadiusDark: CGFloat = 30
+        static let saturation: Double = 1.8
+        static let scrimOpacity: Double = 0.16
+        static let scrimOpacityDark: Double = 0.34
+        /// Reduce Transparency raises the scrim, since the surface itself goes opaque.
+        static let scrimOpacityOpaque: Double = 0.22
+        static let scrimOpacityOpaqueDark: Double = 0.5
     }
 }
