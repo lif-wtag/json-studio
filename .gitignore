@@ -9,6 +9,9 @@
 /Docs/
 .claude/
 
+# ...except the README, which is the one doc the repository itself needs.
+!README.md
+
 # Keep the sample payload fixture: it is code-adjacent test/mockup data, not docs.
 # (No rule needed — it is .json, not .md — noted here so it isn't "cleaned up" by mistake.)
 
