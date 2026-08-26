@@ -119,11 +119,11 @@
       "text": "Measured on the ADOPTED palette: worst-case contrast between the four diff colours is 1.00-1.10 across normal, deuteranopic, protanopic AND grayscale vision.\n\nNo choice of hex fixes this - four colours all holding 4.5:1 against one ground are necessarily close in luminance, so they cannot also be far from each other. The design reached the same conclusion independently, which is why it specifies three carriers.\n\nSo in the compare workspace every changed row carries its colour, its glyph, its gutter sign (+ / -), AND its label, and added is the lighter tint of the added/removed pair. Grayscale the artboard and it still reads."
     },
     {
-      "id": "beautify",
+      "id": "toolbar-verbs",
       "x": 2760,
       "y": 4028,
       "w": 640,
-      "text": "Beautify (FM-13) added 2026-08-26, fourth toolbar verb.\n\nIt is NOT a synonym for Format. Format is uniform and one-value-per-line. Beautify is width-aware: a leaf object or array stays inline while it fits printWidth (default 100) and breaks when it does not. Both are order-preserving and idempotent.\n\nWhy it earns the width: on Design/sample-payload.json, Format produces 224 lines and Beautify produces 92 - the same document, 2.4x the scrolling. The fixture is already written in the Beautify shape, because that is how humans hand-write JSON.\n\nThe search field narrows 208 -> 176 to pay for the pill. Note the design's own self-critique argues for FEWER toolbar verbs (it wants Minify dropped); that decision is still open."
+      "text": "Toolbar verbs settled 2026-08-26: Format, Minify, Compare. Three, not two and not four.\n\nMinify STAYS. The design's own self-critique argued for dropping it - \"minify is a pre-export act performed once, and it is already in the JSON menu with Opt-Cmd-M\" - and that was overruled.\n\nA fourth verb, \"Beautify\", was proposed and rejected: in practice Beautify and Format mean the same thing, and a toolbar pill that duplicates its neighbour is the weakest kind of addition. Width-aware output - keeping a leaf object inline while it fits - stays available, but as a printWidth PREFERENCE on Format rather than as a second command. One verb, one meaning."
     }
   ],
   "launch": {

@@ -52,8 +52,7 @@ enum Tokens {
         static let toolbarHeight: CGFloat = 52
         static let statusBarHeight: CGFloat = 24
         static let controlHeight: CGFloat = 26
-        /// 176, not the design's 208 — Beautify (FM-13) took a pill's width.
-        static let searchFieldWidth: CGFloat = 176
+        static let searchFieldWidth: CGFloat = 208
 
         static let editorTopInset: CGFloat = 8
         static let editorLeadingInset: CGFloat = 10
