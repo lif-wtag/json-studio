@@ -1,0 +1,42 @@
+# =============================================================================
+# JSON Studio — VERSION CODE ONLY.
+# Documentation and local working files are intentionally NOT committed.
+# (working notes, planning docs, Docs/, Design/*.md …)
+# =============================================================================
+
+# --- Docs & local working files (not versioned) ---
+*.md
+/Docs/
+.claude/
+
+# Keep the sample payload fixture: it is code-adjacent test/mockup data, not docs.
+# (No rule needed — it is .json, not .md — noted here so it isn't "cleaned up" by mistake.)
+
+# --- macOS ---
+.DS_Store
+*.swp
+
+# --- Xcode ---
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+DerivedData/
+build/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# --- Swift Package Manager ---
+.build/
+.swiftpm/
+Package.resolved
+
+# --- Fetched fixtures (Phase 2 fetches the JSONTestSuite corpus) ---
+Packages/JSONKit/Tests/JSONKitTests/Fixtures/*.zip
+
+# --- Editor / tooling ---
+*.orig
+.idea/

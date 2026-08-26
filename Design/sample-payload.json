@@ -1,0 +1,92 @@
+{
+  "schemaVersion": "2026-08",
+  "generatedAt": "2026-08-26T13:45:00Z",
+  "request": {
+    "id": "req_9F2aQ7bX",
+    "method": "GET",
+    "path": "/v3/devices/telemetry",
+    "authenticated": true,
+    "headers": {
+      "accept": "application/json",
+      "x-trace-id": "b3e1c4a0-7d2f-4e88-9a11-0f6c2d5e8a44",
+      "x-region": null
+    }
+  },
+  "account": {
+    "id": 8842001,
+    "externalId": 9007199254740993,
+    "displayName": "Nordwind Logistik GmbH",
+    "locale": "de-DE",
+    "note": "Wichtiger Hinweis für den Betrieb: Die angeschlossenen Sensoren übertragen ihre Messwerte im Fünf-Minuten-Takt. Fällt ein Gerät für mehr als drei aufeinanderfolgende Intervalle aus, wird automatisch ein Wartungsauftrag erzeugt und der zuständige Techniker per E-Mail benachrichtigt. Bitte prüfen Sie in diesem Fall zunächst die Netzwerkverbindung, bevor Sie das Gerät zurücksetzen — ein Zurücksetzen löscht den lokalen Zwischenspeicher unwiderruflich.",
+    "tags": ["priority", "eu-central", "cold-chain", "24x7", "verträge-2026"],
+    "billing": null
+  },
+  "devices": [
+    {
+      "id": "dev-001",
+      "label": "Kühlwagen A · Trailer 12",
+      "online": true,
+      "firmware": "4.11.2",
+      "battery": 0.87,
+      "coordinates": {
+        "last": {
+          "lat": 52.520008,
+          "lon": 13.404954,
+          "accuracy": { "horizontal": 4.5, "vertical": 8.0, "source": "gnss" },
+          "altitude": { "value": 34.2, "unit": "m", "reference": { "datum": "WGS84", "geoidHeight": 43.1 } }
+        },
+        "history": []
+      },
+      "sensors": {
+        "temperature": { "value": -18.4, "unit": "°C", "withinRange": true },
+        "humidity": { "value": 41, "unit": "%", "withinRange": true },
+        "door": { "open": false, "lastOpenedAt": null }
+      },
+      "telemetry": [
+        -18.4, -18.3, -18.5, -18.6, -18.4, -18.2, -18.1, -18.3,
+        -18.7, -18.9, -19.0, -18.8, -18.5, -18.4, -18.4, -18.3,
+        -18.2, -18.1, -18.0, -17.9, -18.1, -18.4, -18.6, -18.7,
+        -18.8, -18.6, -18.5, -18.4, -18.3, -18.2, -18.4, -18.5
+      ],
+      "alerts": [
+        { "code": 1001, "severity": "info", "message": "Door opened", "acknowledged": true },
+        { "code": 2003, "severity": "warning", "message": "Temperatur über Schwellwert", "acknowledged": false }
+      ]
+    },
+    {
+      "id": "dev-002",
+      "label": "Kühlraum B — 冷蔵室 🧊",
+      "online": false,
+      "firmware": "4.9.0",
+      "battery": null,
+      "coordinates": {
+        "last": {
+          "lat": 48.137154,
+          "lon": 11.576124,
+          "accuracy": { "horizontal": 12.0, "vertical": 20.0, "source": "wifi" },
+          "altitude": { "value": 519.0, "unit": "m", "reference": { "datum": "WGS84", "geoidHeight": 47.8 } }
+        },
+        "history": [
+          { "at": "2026-08-26T13:40:00Z", "lat": 48.137154, "lon": 11.576124 },
+          { "at": "2026-08-26T13:35:00Z", "lat": 48.137201, "lon": 11.575998 }
+        ]
+      },
+      "sensors": {
+        "temperature": { "value": 4.2, "unit": "°C", "withinRange": true },
+        "humidity": { "value": 55, "unit": "%", "withinRange": false },
+        "door": { "open": true, "lastOpenedAt": "2026-08-26T13:44:12Z" }
+      },
+      "telemetry": [],
+      "alerts": []
+    }
+  ],
+  "summary": {
+    "deviceCount": 2,
+    "onlineCount": 1,
+    "unicodeSamples": ["café", "naïve", "Straße", "日本語", "emoji: 🚚❄️", "math: √2 ≈ 1.41421"],
+    "flags": [true, false, null, true],
+    "mixed": [1, "two", 3.0, false, null, { "nested": true }, [0, 1, 2]],
+    "ratios": { "empty-object": {}, "empty-array": [], "empty-string": "", "zero": 0, "negativeZero": -0 },
+    "bigIntegers": { "safe": 9007199254740991, "unsafe": 9007199254740993, "veryLarge": 1e308 }
+  }
+}
