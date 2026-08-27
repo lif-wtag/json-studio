@@ -114,29 +114,19 @@ extension JSONDocument {
         undoManager?.setActionName(actionName)
     }
 
-    /// Run one of the toolbar verbs. The menu bar (Task 17) calls the same method, so the two
-    /// cannot diverge; the compare window is Task 27 and is refused rather than faked.
+    /// Run one of the three verbs. The menu bar, the toolbar and a keyboard shortcut all arrive
+    /// here, so the three cannot diverge; the compare window is Task 27 and is refused rather than
+    /// faked.
+    ///
+    /// The rule for *what text comes out* is `FormattingPreferences.formatted(_:for:)` — pure, and
+    /// tested there. What this adds is the one thing that needs the document: making the change a
+    /// single undoable operation.
     func perform(
         _ command: DocumentCommand,
-        indent: FormatOptions.Indent,
+        formatting: FormattingPreferences,
         undoManager: UndoManager?
     ) {
-        // Formatting a recovered tree would emit valid JSON that differs from what was written.
-        // The toolbar disables these; this guard is the one that actually holds, since a menu
-        // item or a shortcut can reach here by another route.
-        guard status.isFormattable else { return }
-
-        let options: FormatOptions
-        switch command {
-        case .format: options = FormatOptions(indent: indent)
-        case .minify: options = .minified
-        case .compare: return
-        }
-
-        let result = Parser().parse(text)
-        // Formatted against the source it was parsed from — the formatter re-emits scalars by
-        // slicing their spans, which is what keeps `\u00e9` and `9007199254740993` byte-exact.
-        guard let formatted = Formatter(options: options).format(result, source: text) else { return }
+        guard let formatted = formatting.formatted(text, for: command) else { return }
         replaceText(with: formatted, undoManager: undoManager, actionName: command.menuTitle)
     }
 }

@@ -12,10 +12,19 @@ import SwiftUI
 struct RootWindowView: View {
     @ObservedObject var document: JSONDocument
 
-    @AppStorage(IndentPreference.storageKey) private var indent: IndentPreference = .twoSpaces
+    @AppStorage(Preferences.indent) private var indent: IndentPreference = .twoSpaces
+    @AppStorage(Preferences.widthAwareFormatting) private var widthAware = Preferences.defaultWidthAware
+    @AppStorage(Preferences.printWidth) private var printWidth = Preferences.defaultPrintWidth
+    @AppStorage(Preferences.trailingNewline) private var trailingNewline = Preferences.defaultTrailingNewline
+    @AppStorage(Preferences.showInspectorInNewWindows)
+    private var showInspectorInNewWindows = Preferences.defaultShowInspector
+    @AppStorage(Preferences.editorFontSize) private var editorFontSize = Preferences.defaultEditorFontSize
+
     @Environment(\.undoManager) private var undoManager
 
-    @State private var showsInspector = true
+    /// Per-window, not a preference: closing the inspector in one document must not close it in
+    /// the others. The preference only supplies the value a new window starts with.
+    @State private var showsInspector = Preferences.defaultShowInspector
     @State private var searchQuery = ""
     /// Task 22 publishes the real caret from the text view. Until the editor exists, every
     /// document sits at its start — which is where a caret genuinely is in one nobody has clicked.
@@ -24,7 +33,7 @@ struct RootWindowView: View {
     var body: some View {
         VStack(spacing: 0) {
             HSplitView {
-                EditorPane(document: document)
+                EditorPane(document: document, fontSize: editorFontSize)
                 if showsInspector {
                     InspectorPane(status: document.status)
                 }
@@ -42,14 +51,29 @@ struct RootWindowView: View {
                 status: document.status,
                 searchQuery: $searchQuery,
                 showsInspector: $showsInspector,
-                perform: { command in
-                    document.perform(command, indent: indent.indent, undoManager: undoManager)
-                }
+                perform: run
             )
         }
         // A document restored from autosave or opened before the view existed still needs its
         // first status; asking again is cheap and idempotent, since a matching result is dropped.
-        .task { document.scheduleStatusRefresh() }
+        .task {
+            showsInspector = showInspectorInNewWindows
+            document.scheduleStatusRefresh()
+        }
+    }
+
+    /// The one path a verb takes, whether it arrived from the toolbar, the menu bar or a shortcut.
+    private func run(_ command: DocumentCommand) {
+        document.perform(command, formatting: formatting, undoManager: undoManager)
+    }
+
+    private var formatting: FormattingPreferences {
+        FormattingPreferences(
+            indent: indent,
+            widthAware: widthAware,
+            printWidth: printWidth,
+            trailingNewline: trailingNewline
+        )
     }
 }
 
@@ -61,13 +85,14 @@ struct RootWindowView: View {
 /// artboard and Task 19 inherits the right surface.
 private struct EditorPane: View {
     @ObservedObject var document: JSONDocument
+    var fontSize: Double
 
     @Environment(\.colorScheme) private var scheme
 
     var body: some View {
         ScrollView([.vertical, .horizontal]) {
             Text(document.text.isEmpty ? "Empty document" : document.text)
-                .font(Tokens.Typography.editorBody())
+                .font(Tokens.Typography.editorBody(size: fontSize))
                 .textSelection(.enabled)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, Tokens.Layout.editorTopInset)
