@@ -16,6 +16,14 @@ public enum ParseErrorCopy {
 
         switch error.kind {
         case .missingComma:
+            // The array wording is not cosmetic: "property" is wrong for an element, and this is
+            // the message developers read most often.
+            if c.container == .array {
+                return (
+                    "Add a comma after this element.",
+                    "The next element starts on line \(c.nextLine.map(String.init) ?? "?") without one."
+                )
+            }
             return (
                 "Add a comma after this value.",
                 "The next property starts on line \(c.nextLine.map(String.init) ?? "?") without one."
@@ -125,6 +133,39 @@ public enum ParseErrorCopy {
                 "The document already ended on line \(c.endLine.map(String.init) ?? "?").",
                 "Remove this, or wrap both values in an array."
             )
+
+        case .missingValue:
+            if c.container == .array {
+                return (
+                    "Add a value, or remove the comma.",
+                    "An array element can't be empty."
+                )
+            }
+            return (
+                "Add a value after the colon.",
+                "An object entry needs one — write \"key\": value."
+            )
+
+        case .invalidLiteral:
+            let found = c.found ?? "this"
+            if c.expectation == .key {
+                return (
+                    "Replace \(found) with a quoted key.",
+                    "Object entries are written \"key\": value."
+                )
+            }
+            return (
+                "Replace \(found) with a JSON value.",
+                "JSON has strings, numbers, true, false, null, objects and arrays — nothing else."
+            )
+
+        case .nestingTooDeep:
+            // The one message with no imperative — see `error-copy.md` #17. There is no action
+            // the developer can take, and inventing one would be advice rather than an error.
+            return (
+                "This structure nests deeper than \(c.limit.map(String.init) ?? "512") levels.",
+                "Everything above that depth is parsed; below it, this branch is shown empty."
+            )
         }
     }
 
@@ -140,6 +181,12 @@ public enum ParseErrorCopy {
             guard let line = firstLine else { return "\(errorCount) errors" }
             return "\(errorCount) errors · first on line \(line)"
         }
+    }
+
+    /// `{found}` is capped so an error message can't be swamped by a 4 KB run of garbage.
+    /// `Design/error-copy.md` fixes the limit at 24 characters.
+    static func truncate(_ s: String, limit: Int = 24) -> String {
+        s.count <= limit ? s : String(s.prefix(limit)) + "…"
     }
 
     /// Human names for the control characters `controlCharacterInString` reports. Never render the

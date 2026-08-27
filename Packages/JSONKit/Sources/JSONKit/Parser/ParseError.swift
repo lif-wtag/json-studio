@@ -14,9 +14,10 @@
 /// transcribed verbatim from `Design/error-copy.md`.
 public struct ParseError: Sendable, Equatable, Error {
 
-    /// The thirteen errors from `Design/error-copy.md`. Adding a fourteenth is a design change:
-    /// add the copy there first, then the case here — which is exactly how `invalidEscape` got
-    /// added when the tokenizer revealed the original twelve had no message for `\x`.
+    /// The seventeen errors from `Design/error-copy.md`. Adding an eighteenth is a design
+    /// change: add the copy there first, then the case here — which is exactly how `invalidEscape`
+    /// got added when the tokenizer revealed the original twelve had no message for `\x`, and how
+    /// the last three arrived when the parser met `{"a": }`, `[True]` and a 100,000-deep array.
     public enum Kind: String, Sendable, CaseIterable {
         case missingComma
         case trailingComma
@@ -34,6 +35,23 @@ public struct ParseError: Sendable, Equatable, Error {
         case singleQuotedString
         case invalidNumber
         case trailingContent
+        /// Nothing where a value belongs — `{"a": }`, `[1, , 2]`.
+        case missingValue
+        /// A token that is not a JSON value at all — `True`, `NaN`, `None`, a stray brace.
+        case invalidLiteral
+        /// The document nests past `Parser.maxDepth`. A parser limit, not a user mistake.
+        case nestingTooDeep
+    }
+
+    /// Which container an error occurred inside. `missingComma` and `missingValue` each have an
+    /// object and an array wording, because the fix differs.
+    public enum ContainerKind: String, Sendable, CaseIterable {
+        case object, array
+    }
+
+    /// What the parser was reading when it met an unusable token. `invalidLiteral`'s two wordings.
+    public enum Expectation: String, Sendable, CaseIterable {
+        case value, key
     }
 
     /// Values the copy interpolates. Each is optional because no single message needs them all;
@@ -55,6 +73,13 @@ public struct ParseError: Sendable, Equatable, Error {
         public var found: String?
         /// Which `invalidNumber` sub-case applies.
         public var numberProblem: NumberProblem?
+        /// Object or array, for the errors whose wording differs between them.
+        public var container: ContainerKind?
+        /// Value or key position, for `invalidLiteral`.
+        public var expectation: Expectation?
+        /// The parser's depth limit, for `nestingTooDeep` — so the message can never drift from
+        /// `Parser.maxDepth`.
+        public var limit: Int?
 
         public init(
             nextLine: Int? = nil,
@@ -64,7 +89,10 @@ public struct ParseError: Sendable, Equatable, Error {
             characterName: String? = nil,
             escape: String? = nil,
             found: String? = nil,
-            numberProblem: NumberProblem? = nil
+            numberProblem: NumberProblem? = nil,
+            container: ContainerKind? = nil,
+            expectation: Expectation? = nil,
+            limit: Int? = nil
         ) {
             self.nextLine = nextLine
             self.openLine = openLine
@@ -74,6 +102,9 @@ public struct ParseError: Sendable, Equatable, Error {
             self.escape = escape
             self.found = found
             self.numberProblem = numberProblem
+            self.container = container
+            self.expectation = expectation
+            self.limit = limit
         }
     }
 
@@ -86,7 +117,7 @@ public struct ParseError: Sendable, Equatable, Error {
         case missingDigits
     }
 
-    /// Which of the twelve this is.
+    /// Which of the seventeen this is.
     public var kind: Kind
     /// **The cause** — the span the fix applies to. What gets underlined and scrolled to.
     public var span: SourceSpan

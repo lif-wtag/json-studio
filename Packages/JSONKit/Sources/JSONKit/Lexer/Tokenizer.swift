@@ -389,7 +389,7 @@ private struct Scanner {
             errors.append(ParseError(
                 kind: .invalidNumber,
                 span: span,
-                context: .init(found: truncated(source), numberProblem: problem)
+                context: .init(found: ParseErrorCopy.truncate(source), numberProblem: problem)
             ))
         }
         emit(.number, span, .number(source))
@@ -414,8 +414,4 @@ private struct Scanner {
         }
     }
 
-    /// `{found}` is capped so an error message can't be swamped by a 4 KB run of garbage.
-    private func truncated(_ s: String, limit: Int = 24) -> String {
-        s.count <= limit ? s : String(s.prefix(limit)) + "…"
-    }
 }
