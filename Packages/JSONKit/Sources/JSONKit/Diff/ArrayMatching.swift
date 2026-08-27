@@ -1,28 +1,28 @@
-/// How the structural diff pairs up array elements — the hard part of diffing (CP-04).
+/// How the structural diff pairs up array elements — the hard part of diffing (CP-04), and a
+/// High-likelihood risk in the build guide's register precisely because getting it wrong turns a
+/// useful diff into noise.
 ///
-///  - `index`:        position i vs position i. Right for fixed-shape tuples and positional data.
-///  - `identityKey`:  match objects by a stable key (e.g. `"id"`). Right for arrays of records,
-///                    where index-wise matching turns one insertion into a cascade of noise.
-///  - `heuristic`:    LCS over per-element digests. Right when there's no identity key but order
-///                    is meaningful.
+/// **The choice is a parameter, never a guess the engine makes.** 3e exposes it in the compare
+/// workspace — the artboard draws a "Match arrays by" control — because only the person reading
+/// the data knows whether their array is a sequence or a set of records.
 ///
-/// The choice is a **parameter, not something the engine guesses**, because 3e exposes it in the
-/// UI: for arrays of records the difference between identity-key and index-wise matching is the
-/// difference between a useful diff and noise, and only the person reading the data knows which
-/// their array is.
+/// | Strategy | Pairs elements by | Right when |
+/// |---|---|---|
+/// | `index` | position `i` vs position `i` | Fixed-shape tuples and positional data: a coordinate pair, an RGB triple, a fixed column order. Position *is* the meaning. |
+/// | `identityKey` | the value of a named key | Arrays of records with a stable id. This is the case the design calls out: pairing by `id` means a reordered array reads as **"Identical · 0 changes"** instead of 32 changes. |
+/// | `heuristic` | longest common subsequence of equal elements, then position within each gap | Order is meaningful but there is no id — a log, a changelog, an ordered list. An insertion shows as one addition rather than shifting everything after it. |
 ///
-/// **`identityKey` and `heuristic` are not implemented yet — Task 10.** Until then
-/// `StructuralDiff` treats them as `index` and says so in its own documentation, rather than
-/// failing: JSONKit is not yet linked into the app (Phase 3a), so no caller can be misled, and a
-/// visible fallback with a test asserting it beats a `fatalError` on a half-built feature.
+/// **Reordering under `identityKey` produces an empty diff**, which is the design's stated
+/// behaviour, not an omission: the four diff semantics are added, removed, modified and
+/// type-changed, and there is no "moved" badge to render. If move detection is ever wanted it is
+/// a design change — a fifth semantic with its own colour, glyph and label — not an engine change.
 public enum ArrayMatching: Sendable, Equatable {
+    /// Position `i` against position `i`.
     case index
+    /// Match objects by the value of this key. Elements that are not objects, or lack the key,
+    /// fall back to positional pairing among themselves.
     case identityKey(String)
+    /// Longest common subsequence over element equality, with positional pairing inside the gaps
+    /// so an edited element reads as `modified` rather than as a removal plus an addition.
     case heuristic
-
-    /// `true` while this strategy still falls back to index-wise pairing (Task 10 removes this).
-    public var isImplemented: Bool {
-        if case .index = self { return true }
-        return false
-    }
 }

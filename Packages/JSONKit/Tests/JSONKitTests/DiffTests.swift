@@ -198,17 +198,6 @@ struct DiffStructureTests {
         // Identity-key matching (Task 10) should reduce this to a single 'added'.
     }
 
-    @Test("unimplemented strategies fall back to index-wise, visibly")
-    func unimplementedStrategiesFallBack() throws {
-        #expect(ArrayMatching.index.isImplemented)
-        #expect(!ArrayMatching.identityKey("id").isImplemented)
-        #expect(!ArrayMatching.heuristic.isImplemented)
-        // Same answer as .index until Task 10 — asserted so the fallback is not a surprise.
-        let byIndex = summarise(try diff("[1,2]", "[1,9]", matching: .index))
-        #expect(summarise(try diff("[1,2]", "[1,9]", matching: .identityKey("id"))) == byIndex)
-        #expect(summarise(try diff("[1,2]", "[1,9]", matching: .heuristic)) == byIndex)
-    }
-
     @Test("output order is deterministic")
     func deterministicOrder() throws {
         let a = #"{"z":1,"m":{"q":1,"p":2},"a":[1,2]}"#
@@ -267,5 +256,284 @@ struct DiffRobustnessTests {
         let task = Task { try StructuralDiff().diff(l, r) }
         task.cancel()
         await #expect(throws: CancellationError.self) { try await task.value }
+    }
+}
+
+// MARK: - Task 10: array matching
+
+@Suite("StructuralDiff · identity-key matching")
+struct DiffIdentityKeyTests {
+
+    private let records = #"[{"id":1,"v":"a"},{"id":2,"v":"b"},{"id":3,"v":"c"}]"#
+
+    @Test("the design's own claim: a reordered record array is Identical, 0 changes")
+    func reorderedRecordsAreIdentical() throws {
+        // The Compare artboard renders "Identical · 0 changes" and explains: "Identity-key
+        // matching pairs records by id, so a reordered array is not 32 changes."
+        let shuffled = #"[{"id":3,"v":"c"},{"id":1,"v":"a"},{"id":2,"v":"b"}]"#
+        #expect(try diff(records, shuffled, matching: .identityKey("id")).isEmpty)
+    }
+
+    @Test("…and the same input index-wise is every element changed — the contrast that justifies it")
+    func sameInputIndexWiseIsNoise() throws {
+        let shuffled = #"[{"id":3,"v":"c"},{"id":1,"v":"a"},{"id":2,"v":"b"}]"#
+        // Each of the three positions has both its id and its v changed, so a pure reorder of
+        // three records costs six changes index-wise — against zero under identity-key.
+        let changes = try diff(records, shuffled, matching: .index)
+        #expect(changes.count == 6, "index-wise reports \(changes.count) changes for a reorder")
+        #expect(changes.allSatisfy { $0.kind == .modified })
+    }
+
+    @Test("an inserted record is one addition, not a cascade")
+    func insertion() throws {
+        let withNew = #"[{"id":0,"v":"z"},{"id":1,"v":"a"},{"id":2,"v":"b"},{"id":3,"v":"c"}]"#
+        #expect(summarise(try diff(records, withNew, matching: .identityKey("id"))) == ["added@$[0]"])
+        // Index-wise shifts every record by one, so both fields of all three differ, plus the
+        // surplus element: seven changes for a single insertion.
+        let byIndex = try diff(records, withNew, matching: .index)
+        #expect(byIndex.count == 7, "got \(byIndex.count)")
+    }
+
+    @Test("a removed record is one removal, and an edited one is a modification at its own path")
+    func removalAndEdit() throws {
+        let without2 = #"[{"id":1,"v":"a"},{"id":3,"v":"c"}]"#
+        #expect(summarise(try diff(records, without2, matching: .identityKey("id"))) == ["removed@$[1]"])
+
+        let edited = #"[{"id":1,"v":"a"},{"id":2,"v":"CHANGED"},{"id":3,"v":"c"}]"#
+        #expect(summarise(try diff(records, edited, matching: .identityKey("id")))
+                == ["modified@$[1].v"])
+    }
+
+    @Test("reordered AND edited: the edit is found at the record's left-document index")
+    func reorderedAndEdited() throws {
+        let both = #"[{"id":3,"v":"c"},{"id":2,"v":"CHANGED"},{"id":1,"v":"a"}]"#
+        #expect(summarise(try diff(records, both, matching: .identityKey("id")))
+                == ["modified@$[1].v"])
+    }
+
+    @Test("elements without the key are paired positionally among themselves")
+    func unkeyedElementsFallBack() throws {
+        // A partly-keyed array stays useful instead of reporting every unkeyed element twice.
+        let a = #"[{"id":1,"v":"a"},"loose",{"id":2,"v":"b"}]"#
+        let b = #"[{"id":2,"v":"b"},"loose",{"id":1,"v":"a"}]"#
+        #expect(try diff(a, b, matching: .identityKey("id")).isEmpty)
+
+        // `#expect`'s message is a NON-throwing autoclosure, so the result is hoisted first —
+        // the same constraint the tokenizer task hit with `allSatisfy(\.keyPath)`.
+        let c = #"[{"id":1,"v":"a"},"changed"]"#
+        let mixed = summarise(try diff(a, c, matching: .identityKey("id")))
+        #expect(mixed == ["removed@$[2]", "modified@$[1]"], "got \(mixed)")
+    }
+
+    @Test("a container-valued identity is not an identity — those elements pair positionally")
+    func containerIdentityIsIgnored() throws {
+        let a = #"[{"id":[1],"v":"a"},{"id":[2],"v":"b"}]"#
+        let b = #"[{"id":[2],"v":"b"},{"id":[1],"v":"a"}]"#
+        // Positional, so this reads as changed rather than as a reorder.
+        #expect(!(try diff(a, b, matching: .identityKey("id")).isEmpty))
+    }
+
+    @Test("duplicate identity values pair positionally within their group")
+    func duplicateIdentities() throws {
+        let a = #"[{"id":1,"v":"x"},{"id":1,"v":"y"}]"#
+        #expect(try diff(a, a, matching: .identityKey("id")).isEmpty)
+        let b = #"[{"id":1,"v":"x"},{"id":1,"v":"z"}]"#
+        #expect(summarise(try diff(a, b, matching: .identityKey("id"))) == ["modified@$[1].v"])
+    }
+
+    @Test("a missing key name matches nothing and degrades to positional")
+    func wrongKeyName() throws {
+        let shuffled = #"[{"id":3,"v":"c"},{"id":1,"v":"a"},{"id":2,"v":"b"}]"#
+        // Nothing has "uuid", so every element is unkeyed and pairs positionally.
+        let byWrongKey = summarise(try diff(records, shuffled, matching: .identityKey("uuid")))
+        let byIndex = summarise(try diff(records, shuffled, matching: .index))
+        #expect(byWrongKey == byIndex)
+    }
+}
+
+@Suite("StructuralDiff · heuristic matching")
+struct DiffHeuristicTests {
+
+    @Test("an insertion is one addition, not a shift of everything after it")
+    func insertionInAnOrderedList() throws {
+        let before = #"["a","b","c","d"]"#
+        let after = #"["a","b","NEW","c","d"]"#
+        #expect(summarise(try diff(before, after, matching: .heuristic)) == ["added@$[2]"])
+        // Index-wise shifts: c→NEW, d→c, then d is added.
+        #expect(try diff(before, after, matching: .index).count == 3)
+    }
+
+    @Test("a deletion is one removal")
+    func deletion() throws {
+        #expect(summarise(try diff(#"["a","b","c"]"#, #"["a","c"]"#, matching: .heuristic))
+                == ["removed@$[1]"])
+    }
+
+    @Test("an element edited in place is ONE modification, not a removal plus an addition")
+    func editInPlace() throws {
+        // The reason the gaps are paired positionally after the LCS: a plain LCS matches only
+        // identical elements, so this would otherwise be worse than index-wise.
+        #expect(summarise(try diff(#"["a","b","c"]"#, #"["a","CHANGED","c"]"#, matching: .heuristic))
+                == ["modified@$[1]"])
+    }
+
+    @Test("insertion and edit together are reported separately")
+    func insertionAndEdit() throws {
+        let before = #"["a","b","c"]"#
+        let after = #"["a","b","EDITED","NEW"]"#
+        let changes = try diff(before, after, matching: .heuristic)
+        #expect(changes.count == 2, "got \(summarise(changes))")
+        #expect(Set(changes.map(\.kind)) == Set([.modified, .added]))
+    }
+
+    @Test("records without an id still align on the ones that didn't change")
+    func recordsWithoutAnIdentity() throws {
+        let before = #"[{"a":1},{"b":2},{"c":3}]"#
+        let after = #"[{"a":1},{"NEW":0},{"b":2},{"c":3}]"#
+        #expect(summarise(try diff(before, after, matching: .heuristic)) == ["added@$[1]"])
+    }
+
+    @Test("reordering is still a change under the heuristic — arrays are sequences")
+    func reorderingIsStillAChange() throws {
+        // Only identity-key treats a reorder as identical; the heuristic preserves order meaning.
+        #expect(!(try diff(#"["a","b"]"#, #"["b","a"]"#, matching: .heuristic).isEmpty))
+    }
+
+    @Test("key order inside elements is still ignored — CP-02 holds through matching")
+    func keyOrderInsideElements() throws {
+        let a = #"[{"x":1,"y":2},{"p":3}]"#
+        let b = #"[{"y":2,"x":1},{"p":3}]"#
+        #expect(try diff(a, b, matching: .heuristic).isEmpty)
+        #expect(try diff(a, b, matching: .identityKey("x")).isEmpty)
+    }
+
+    @Test("the LCS cap is documented and answerable in advance, not silent")
+    func cellCap() {
+        #expect(StructuralDiff.heuristicWasExact(leftCount: 100, rightCount: 100))
+        #expect(StructuralDiff.heuristicWasExact(leftCount: 2000, rightCount: 2000))
+        #expect(!StructuralDiff.heuristicWasExact(leftCount: 3000, rightCount: 3000))
+    }
+
+    @Test("two long arrays differing only in the middle stay cheap and exact")
+    func prefixSuffixStripping() throws {
+        // Prefix/suffix stripping is what keeps the cap out of reach for realistic documents.
+        let common = (0..<5000).map { "\($0)" }.joined(separator: ",")
+        let before = "[" + common + ",111,999]"
+        let after = "[" + common + ",222,999]"
+        #expect(summarise(try diff(before, after, matching: .heuristic)) == ["modified@$[5000]"])
+    }
+
+    @Test("heuristic is the default, since it is the least-noisy assumption when nothing is known")
+    func defaultStrategy() throws {
+        #expect(StructuralDiff().arrayMatching == .heuristic)
+    }
+}
+
+@Suite("Structural equality")
+struct StructuralEqualityTests {
+
+    @Test("equal structure at different offsets — where == gets it wrong")
+    func ignoresSpans() throws {
+        let a = try tree(#"{"a":[1,2]}"#)
+        let b = try tree("   " + #"{"a":[1,2]}"#)
+        #expect(a.isStructurallyEqual(to: b))
+        #expect(a != b, "== compares spans, which is exactly why this method exists")
+    }
+
+    @Test("key order ignored, array order respected")
+    func orderRules() throws {
+        #expect(try tree(#"{"a":1,"b":2}"#).isStructurallyEqual(to: try tree(#"{"b":2,"a":1}"#)))
+        #expect(!(try tree("[1,2]").isStructurallyEqual(to: try tree("[2,1]"))))
+    }
+
+    @Test("differences in kind, count, value and duplicates are all caught")
+    func differences() throws {
+        #expect(!(try tree(#"{"a":1}"#).isStructurallyEqual(to: try tree(#"{"a":"1"}"#))))
+        #expect(!(try tree(#"{"a":1}"#).isStructurallyEqual(to: try tree(#"{"a":1,"b":2}"#))))
+        #expect(!(try tree(#"{"a":1,"a":2}"#).isStructurallyEqual(to: try tree(#"{"a":1,"a":3}"#))))
+        #expect(!(try tree("[1]").isStructurallyEqual(to: try tree("[1,1]"))))
+    }
+
+    @Test("survives reformatting, and deep nesting")
+    func robust() throws {
+        let source = try sampleJSON()
+        let original = try tree(source)
+        let minified = Formatter(options: .minified).format(original, source: source)
+        #expect(original.isStructurallyEqual(to: try tree(minified)))
+
+        let deep = { (leaf: String) in
+            String(repeating: "[", count: 500) + leaf + String(repeating: "]", count: 500)
+        }
+        #expect(try tree(deep("1")).isStructurallyEqual(to: try tree(deep("1"))))
+        #expect(!(try tree(deep("1")).isStructurallyEqual(to: try tree(deep("2")))))
+    }
+}
+
+@Suite("Structural digest")
+struct StructuralDigestTests {
+
+    /// Swift rejects `try` to the right of a non-assignment operator, so digests are taken first.
+    private func digest(_ source: String) throws -> Int {
+        try tree(source).structuralDigest
+    }
+
+    @Test("equal structure digests equally, whatever the offsets or key order")
+    func equalStructure() throws {
+        #expect(try digest(#"{"a":1}"#) == (try digest("  " + #"{"a":1}"#)))
+        #expect(try digest(#"{"a":1,"b":2}"#) == (try digest(#"{"b":2,"a":1}"#)))
+
+        let source = try sampleJSON()
+        let original = try tree(source)
+        let minified = Formatter(options: .minified).format(original, source: source)
+        #expect(original.structuralDigest == (try tree(minified).structuralDigest))
+    }
+
+    @Test("array order changes the digest, because arrays are sequences")
+    func arrayOrderMatters() throws {
+        let ordered = try digest("[1,2]"), reversed = try digest("[2,1]")
+        #expect(ordered != reversed)
+    }
+
+    @Test("things that must not collide, don't")
+    func discriminates() throws {
+        let cases = [
+            #"{"a":1}"#, #"{"a":2}"#, #"{"b":1}"#, #"{"a":"1"}"#, #"{"a":1.0}"#,
+            "[1]", "[1,1]", "{}", "[]", "null", "0", "false",
+            #"{"a":{"b":1}}"#, #"{"a":[1]}"#,
+        ]
+        var seen: [Int: String] = [:]
+        for source in cases {
+            let d = try digest(source)
+            #expect(seen[d] == nil, "\(source) collided with \(seen[d] ?? "")")
+            seen[d] = source
+        }
+    }
+
+    @Test("duplicated members accumulate rather than cancelling out")
+    func duplicatesDoNotCancel() throws {
+        // Combining members with XOR would make these identical, since x ^ x == 0.
+        let doubled = try digest(#"{"a":1,"a":1}"#)
+        let empty = try digest("{}")
+        let single = try digest(#"{"a":1}"#)
+        #expect(doubled != empty)
+        #expect(doubled != single)
+    }
+
+    @Test("a digest match is never taken as proof — equality still confirms")
+    func digestIsNotAnOracle() throws {
+        // The contract that keeps a collision from becoming a wrong answer: a digest match is
+        // always confirmed with isStructurallyEqual. Shown here on a genuine match.
+        let a = try tree(#"{"x":[1,2,3]}"#), b = try tree(#"{"x":[1,2,3]}"#)
+        #expect(a.structuralDigest == b.structuralDigest)
+        #expect(a.isStructurallyEqual(to: b))
+    }
+
+    @Test("deep nesting digests without exhausting the stack")
+    func deepNesting() throws {
+        let deep = String(repeating: "[", count: 500) + "1" + String(repeating: "]", count: 500)
+        let other = String(repeating: "[", count: 500) + "2" + String(repeating: "]", count: 500)
+        let a = try digest(deep), b = try digest(other), again = try digest(deep)
+        #expect(a != b)
+        #expect(a == again)
     }
 }
