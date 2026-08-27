@@ -13,6 +13,10 @@ import SwiftUI
 /// replace working platform behaviour (drag-out, right-click path menu, version browsing) with a
 /// picture of it.
 ///
+/// **Drawn to the artboard, not left to the system** (Task 16b). A plain `Button` in a macOS 26
+/// toolbar renders borderless; the design specifies bordered pills. ADR-08's "toolbar gets whatever
+/// the system applies" governs *materials* — no glass here — not the shape of a control.
+///
 /// **Shortcuts are not declared here.** `DocumentCommand` carries them and Task 17's menu bar
 /// declares them, once — the convention is that the toolbar *references* a command rather than
 /// defining a second one. Until then the tooltip shows the shortcut so it is at least discoverable.
@@ -23,29 +27,30 @@ struct EditorToolbar: ToolbarContent {
     let perform: (DocumentCommand) -> Void
 
     var body: some ToolbarContent {
-        // Every item sits at the trailing edge, in this order, as the artboard draws it: the
-        // pills, then the search field, then the inspector toggle. The leading edge belongs to
-        // the system's traffic lights and document title.
+        // **One group, drawn as the artboard draws it.** The three pills, a separator, the search
+        // field, a separator, the inspector toggle — one right-aligned cluster with the design's
+        // own spacing. Separate `ToolbarItem`s would let the system choose the gaps and drop the
+        // separators, which is how Task 16 ended up with borderless buttons in an even row.
         ToolbarItemGroup(placement: .primaryAction) {
             ForEach(DocumentCommand.allCases) { command in
                 Button { perform(command) } label: {
                     Label(command.title, systemImage: command.symbol)
                 }
-                .labelStyle(.titleAndIcon)
+                .buttonStyle(ToolbarPillStyle())
                 .disabled(!isEnabled(command))
                 .help(helpText(for: command))
             }
-        }
 
-        ToolbarItem(placement: .primaryAction) {
+            ToolbarSeparator()
+
             SearchField(query: $searchQuery)
-        }
 
-        ToolbarItem(placement: .primaryAction) {
+            ToolbarSeparator()
+
             Toggle(isOn: $showsInspector) {
                 Label("Inspector", systemImage: "sidebar.right")
             }
-            .toggleStyle(.button)
+            .toggleStyle(InspectorToggleStyle())
             .help(showsInspector ? "Hide the inspector" : "Show the inspector")
         }
     }
