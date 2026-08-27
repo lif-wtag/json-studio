@@ -169,11 +169,30 @@ public enum ParseErrorCopy {
         }
     }
 
+    /// The empty-document state from `Design/error-copy.md` §Status bar. Not an error — it is
+    /// the state of every new window, which is why `ParseResult` distinguishes it.
+    public static let emptyDocument = "Empty document"
+
     /// Status-bar summary. `Design/error-copy.md` specifies the exact shapes.
-    public static func statusSummary(errorCount: Int, firstLine: Int?, firstColumn: Int?) -> String {
+    ///
+    /// The valid state takes optional detail — `Valid JSON · 119 properties · 3.7 KB · UTF-8` —
+    /// because that whole line is specified there too, and composing it at the call site would be
+    /// improvising copy in code. Callers with nothing to add get `Valid JSON` alone.
+    public static func statusSummary(
+        errorCount: Int,
+        firstLine: Int? = nil,
+        firstColumn: Int? = nil,
+        properties: Int? = nil,
+        size: String? = nil,
+        encoding: String? = nil
+    ) -> String {
         switch errorCount {
         case 0:
-            return "Valid JSON"
+            var parts = ["Valid JSON"]
+            if let properties { parts.append("\(properties) properties") }
+            if let size { parts.append(size) }
+            if let encoding { parts.append(encoding) }
+            return parts.joined(separator: " · ")
         case 1:
             guard let line = firstLine, let column = firstColumn else { return "1 error" }
             return "1 error · line \(line), column \(column)"
