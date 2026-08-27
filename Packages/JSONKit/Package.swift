@@ -35,6 +35,9 @@ let package = Package(
             name: "JSONKitTests",
             dependencies: ["JSONKit"],
             // JSONTestSuite corpus and other fixtures live here (Phase 2).
+            // Benchmarks/README.md is documentation, not a resource — exclude it so SwiftPM
+            // stops warning about an unhandled file.
+            exclude: ["Benchmarks/README.md"],
             resources: [.copy("Fixtures")],
             swiftSettings: strictConcurrency
         ),

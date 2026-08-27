@@ -1,27 +1,161 @@
-/// A single syntax error. Carries everything the UI needs to locate and explain the problem:
-/// offset, line/column, the token found, the set of tokens that were expected, and a
-/// human-readable message drawn from `Design/error-copy.md` (never improvised in code).
+/// A single syntax error.
+///
+/// **The cause and the detection point are separate fields, and that separation is the product.**
+/// Phase 0 found that every competing tool reports the position where its parser *noticed* a
+/// problem rather than where the problem is — a missing comma gets flagged at the next property
+/// name, and the workaround developers actually use is "check one line before". `span` is where
+/// the fix goes; `detectedAt` is where the parser noticed, present only when the two differ.
+///
+/// **No stored line or column.** ADR-01 says derive them from `LineIndex` at the point of display.
+/// A stored line number is wrong the moment the document is edited above it.
+///
+/// **No stored message.** The project contract forbids improvising error copy in code, so
+/// the parser chooses a `kind` and fills in `context`; the strings live in `ParseErrorCopy`,
+/// transcribed verbatim from `Design/error-copy.md`.
 public struct ParseError: Sendable, Equatable, Error {
-    public var offset: Int
-    public var line: Int
-    public var column: Int
+
+    /// The seventeen errors from `Design/error-copy.md`. Adding an eighteenth is a design
+    /// change: add the copy there first, then the case here — which is exactly how `invalidEscape`
+    /// got added when the tokenizer revealed the original twelve had no message for `\x`, and how
+    /// the last three arrived when the parser met `{"a": }`, `[True]` and a 100,000-deep array.
+    public enum Kind: String, Sendable, CaseIterable {
+        case missingComma
+        case trailingComma
+        case unterminatedString
+        case controlCharacterInString
+        case invalidUnicodeEscape
+        case loneSurrogate
+        /// An unknown escape such as `\\x`. Distinct from `invalidUnicodeEscape`, which is
+        /// specifically a malformed `\\u` — the fixes differ.
+        case invalidEscape
+        case missingClosingBrace
+        case missingClosingBracket
+        case missingColon
+        case unquotedKey
+        case singleQuotedString
+        case invalidNumber
+        case trailingContent
+        /// Nothing where a value belongs — `{"a": }`, `[1, , 2]`.
+        case missingValue
+        /// A token that is not a JSON value at all — `True`, `NaN`, `None`, a stray brace.
+        case invalidLiteral
+        /// The document nests past `Parser.maxDepth`. A parser limit, not a user mistake.
+        case nestingTooDeep
+    }
+
+    /// Which container an error occurred inside. `missingComma` and `missingValue` each have an
+    /// object and an array wording, because the fix differs.
+    public enum ContainerKind: String, Sendable, CaseIterable {
+        case object, array
+    }
+
+    /// What the parser was reading when it met an unusable token. `invalidLiteral`'s two wordings.
+    public enum Expectation: String, Sendable, CaseIterable {
+        case value, key
+    }
+
+    /// Values the copy interpolates. Each is optional because no single message needs them all;
+    /// the copy table asserts what it requires.
+    public struct Context: Sendable, Equatable {
+        /// 1-based line where the *next* token sits — `missingComma`'s `{nextLine}`.
+        public var nextLine: Int?
+        /// 1-based line of the unmatched opening delimiter or quote — `{openLine}`.
+        public var openLine: Int?
+        /// 1-based line where the document's top-level value ended — `{endLine}`.
+        public var endLine: Int?
+        /// The literal closer, `}` or `]` — `{closer}`.
+        public var closer: String?
+        /// A *name* for an unprintable character — "tab", "newline" — never the character itself.
+        public var characterName: String?
+        /// The escape to write instead — `\t`, `\n`.
+        public var escape: String?
+        /// The offending text, truncated for display — `{found}`.
+        public var found: String?
+        /// Which `invalidNumber` sub-case applies.
+        public var numberProblem: NumberProblem?
+        /// Object or array, for the errors whose wording differs between them.
+        public var container: ContainerKind?
+        /// Value or key position, for `invalidLiteral`.
+        public var expectation: Expectation?
+        /// The parser's depth limit, for `nestingTooDeep` — so the message can never drift from
+        /// `Parser.maxDepth`.
+        public var limit: Int?
+
+        public init(
+            nextLine: Int? = nil,
+            openLine: Int? = nil,
+            endLine: Int? = nil,
+            closer: String? = nil,
+            characterName: String? = nil,
+            escape: String? = nil,
+            found: String? = nil,
+            numberProblem: NumberProblem? = nil,
+            container: ContainerKind? = nil,
+            expectation: Expectation? = nil,
+            limit: Int? = nil
+        ) {
+            self.nextLine = nextLine
+            self.openLine = openLine
+            self.endLine = endLine
+            self.closer = closer
+            self.characterName = characterName
+            self.escape = escape
+            self.found = found
+            self.numberProblem = numberProblem
+            self.container = container
+            self.expectation = expectation
+            self.limit = limit
+        }
+    }
+
+    /// `invalidNumber` is one kind with four sub-messages, because the fix differs each time and
+    /// a generic "invalid number" is exactly the vagueness `error-copy.md` exists to prevent.
+    public enum NumberProblem: String, Sendable, CaseIterable {
+        case leadingZero
+        case trailingDecimalPoint
+        case leadingDecimalPoint
+        case missingDigits
+    }
+
+    /// Which of the seventeen this is.
+    public var kind: Kind
+    /// **The cause** — the span the fix applies to. What gets underlined and scrolled to.
+    public var span: SourceSpan
+    /// Where the parser noticed, when that differs from the cause. Nil when they coincide.
+    public var detectedAt: SourceSpan?
+    /// Values the copy interpolates.
+    public var context: Context
+    /// The token actually found. Diagnostic data for tests, not for display.
     public var found: Token.Kind?
+    /// Tokens that would have been legal here. Diagnostic data for tests, not for display —
+    /// an expected-set is the parser's state, not the user's problem.
     public var expected: [Token.Kind]
-    public var message: String
 
     public init(
-        offset: Int,
-        line: Int,
-        column: Int,
+        kind: Kind,
+        span: SourceSpan,
+        detectedAt: SourceSpan? = nil,
+        context: Context = Context(),
         found: Token.Kind? = nil,
-        expected: [Token.Kind] = [],
-        message: String
+        expected: [Token.Kind] = []
     ) {
-        self.offset = offset
-        self.line = line
-        self.column = column
+        self.kind = kind
+        self.span = span
+        self.detectedAt = detectedAt
+        self.context = context
         self.found = found
         self.expected = expected
-        self.message = message
+    }
+
+    /// `true` when the parser noticed the problem somewhere other than its cause — the case the
+    /// copy has to explain, and the case competitors get wrong.
+    public var wasDetectedElsewhere: Bool {
+        guard let detectedAt else { return false }
+        return detectedAt.start != span.start
+    }
+
+    /// Heading and body, resolved from `ParseErrorCopy`. Verbatim from `Design/error-copy.md`.
+    public var copy: (title: String, body: String) {
+        ParseErrorCopy.text(for: self)
     }
 }
