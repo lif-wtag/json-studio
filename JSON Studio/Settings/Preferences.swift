@@ -35,7 +35,9 @@ enum Preferences {
     /// The bounds the stepper enforces. Below ~40 nothing inlines and the preference stops meaning
     /// anything; above ~200 a line stops fitting a pane at the 720pt minimum window.
     static let printWidthRange = 40...200
-    static let editorFontSizeRange = 9.0...24.0
+    /// **10–18, from the artboard**, which prints the range beside the field as "SF Mono · 10–18".
+    /// Task 17 shipped 9–24, invented here rather than read off the design.
+    static let editorFontSizeRange = 10.0...18.0
 }
 
 /// SH-06. Light / dark / system, applied through `.preferredColorScheme`.

@@ -35,13 +35,17 @@ enum DocumentCommand: String, CaseIterable, Identifiable {
         }
     }
 
-    /// SF Symbols standing in for the artboard's Phosphor glyphs: stacked lines of decreasing
-    /// length for Format, converging chevrons for Minify, a two-branch diff for Compare.
+    /// SF Symbols standing in for the artboard's own glyphs — the design's Phosphor set is
+    /// prototype scaffolding and must not ship (`Design/tokens.md` §2).
+    ///
+    /// Format's stacked lines and Minify's converging chevrons map closely. **Compare was
+    /// `arrow.triangle.branch` and was wrong** (Task 16b): the artboard draws two vertical rails,
+    /// which reads as the side-by-side panes the compare workspace actually is, not as a fork.
     var symbol: String {
         switch self {
         case .format: "text.alignleft"
         case .minify: "arrow.right.and.line.vertical.and.arrow.left"
-        case .compare: "arrow.triangle.branch"
+        case .compare: "square.split.2x1"
         }
     }
 
