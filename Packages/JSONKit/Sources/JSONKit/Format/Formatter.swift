@@ -60,6 +60,7 @@ private struct Writer {
     }
 
     private var stack: [Frame] = []
+    private var indentCache: [String] = [""]
 
     init(units: [UInt16], options: FormatOptions) {
         self.units = units
@@ -153,8 +154,17 @@ private struct Writer {
     private func closer(_ node: JSONNode) -> String { node.kind == .object ? "}" : "]" }
     private func empty(_ node: JSONNode) -> String { node.kind == .object ? "{}" : "[]" }
 
-    private func indent(_ level: Int) -> String {
-        options.compact ? "" : String(repeating: options.indent.text, count: level)
+    /// Indent strings, cached by level.
+    ///
+    /// Built fresh, this allocated a `String(repeating:)` for **every child and every container
+    /// close** — tens of thousands of allocations on a 1 MB document, for a handful of distinct
+    /// values. Worth about 2% on a 1 MB document — small, but free.
+    private mutating func indent(_ level: Int) -> String {
+        guard !options.compact else { return "" }
+        while indentCache.count <= level {
+            indentCache.append(indentCache[indentCache.count - 1] + options.indent.text)
+        }
+        return indentCache[level]
     }
 
     // MARK: The width test
@@ -167,8 +177,24 @@ private struct Writer {
     private func inlineIfItFits(_ value: JSONValue, column: Int, reserving: Int) -> String? {
         guard !options.compact, let printWidth = options.printWidth else { return nil }
         let budget = printWidth - column - reserving
-        guard budget > 0 else { return nil }
+        guard budget > 0, canPossiblyFit(value, budget: budget) else { return nil }
         return measured(value, budget: budget)?.text
+    }
+
+    /// A lower bound on a container's inline width, so a container that obviously cannot fit is
+    /// rejected without building any of it.
+    ///
+    /// The width test is about a third of pretty-printing's cost, and most of that is rendering
+    /// containers that then turn out not to fit. The bound must never *over*estimate, or a
+    /// container that would have fitted gets broken: an array of `n` elements is at least
+    /// `[` + n×1 char + (n−1)×`, ` + `]` = 3n, and an object member is at least `"": v` plus its
+    /// separator, so 7n.
+    private func canPossiblyFit(_ value: JSONValue, budget: Int) -> Bool {
+        switch value {
+        case .object(let members): members.isEmpty || 7 * members.count <= budget
+        case .array(let elements): elements.isEmpty || 3 * elements.count <= budget
+        default: true
+        }
     }
 
     /// Objects carry inner spaces — `{ "a": 1 }` — and arrays don't — `["a", "b"]`. Read off the
@@ -227,6 +253,10 @@ private struct Writer {
         guard budget > 0 else { return nil }
         switch node.value {
         case .object, .array:
+            // The same bound as at the top level. A nested container that cannot fit the budget
+            // its parent has left is rejected before any of it is built, which matters because a
+            // parent's failed attempt would otherwise build every descendant it reached.
+            guard canPossiblyFit(node.value, budget: budget) else { return nil }
             return measured(node.value, budget: budget)
         default:
             let text = scalar(node)

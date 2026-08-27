@@ -20,6 +20,8 @@ let package = Package(
         // jsonstudio-cli` works exactly as documented in the project contract. (§4 sketches it under
         // Tools/; the concrete build command wins — see Tools/README.md.)
         .executable(name: "jsonstudio-cli", targets: ["jsonstudio-cli"]),
+        // Budgets from build guide §5, wired so a regression fails CI. Must be run in release.
+        .executable(name: "jsonkit-bench", targets: ["jsonkit-bench"]),
     ],
     targets: [
         .target(
@@ -39,9 +41,21 @@ let package = Package(
             dependencies: ["JSONStudioCLI"],
             swiftSettings: strictConcurrency
         ),
+        // Same reasoning as JSONStudioCLI: the harness lives in a library so the tests can check
+        // it runs, while the timings themselves are only meaningful from the release executable.
+        .target(
+            name: "JSONKitBenchmarks",
+            dependencies: ["JSONKit"],
+            swiftSettings: strictConcurrency
+        ),
+        .executableTarget(
+            name: "jsonkit-bench",
+            dependencies: ["JSONKitBenchmarks"],
+            swiftSettings: strictConcurrency
+        ),
         .testTarget(
             name: "JSONKitTests",
-            dependencies: ["JSONKit", "JSONStudioCLI"],
+            dependencies: ["JSONKit", "JSONStudioCLI", "JSONKitBenchmarks"],
             // JSONTestSuite corpus and other fixtures live here (Phase 2).
             // Benchmarks/README.md is documentation, not a resource — exclude it so SwiftPM
             // stops warning about an unhandled file.
