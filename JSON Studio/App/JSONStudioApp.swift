@@ -2,18 +2,22 @@ import SwiftUI
 
 /// Application entry point.
 ///
-/// Phase 3a replaces this `WindowGroup` with `DocumentGroup` + `JSONDocument`
-/// (`ReferenceFileDocument`), so macOS owns document management — window-per-document,
-/// system window tabs, Open Recent, autosave, version browsing, dirty state, and close
-/// confirmation (ADR-03). There is no documents sidebar; the window is two columns.
+/// **`DocumentGroup` owns document management** (ADR-03), and the list of what that buys is the
+/// reason: window-per-document, system window tabs, Open Recent, autosave, version browsing,
+/// dirty-state tracking, close confirmation, and external-change detection. A custom documents
+/// sidebar would reimplement all of it, worse — so there isn't one, and the window is two columns.
 @main
 struct JSONStudioApp: App {
     var body: some Scene {
-        WindowGroup {
-            RootWindowView()
+        DocumentGroup(newDocument: { JSONDocument() }) { file in
+            RootWindowView(document: file.document)
+                .frame(
+                    minWidth: Tokens.Layout.windowMinWidth,
+                    minHeight: Tokens.Layout.windowMinHeight
+                )
         }
-        // Phase 3a: .commands { … } — full native menu bar
-        // (App / File / Edit / JSON / View / Tools / Window / Help), Tools left sparse.
+        // Task 17 adds `.commands { … }` — the full native menu bar, where every shortcut is
+        // defined rather than in ad-hoc key handlers.
 
         Settings {
             SettingsView()

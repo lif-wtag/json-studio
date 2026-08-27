@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		JS0N0001000000000000JK01 /* JSONKit in Frameworks */ = {isa = PBXBuildFile; productRef = JS0N0002000000000000JK02 /* JSONKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		89E1E888303ECF1900B1592C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				JS0N0001000000000000JK01 /* JSONKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = "JSON Studio";
 			packageProductDependencies = (
+				JS0N0002000000000000JK02 /* JSONKit */,
 			);
 			productName = "JSON Studio";
 			productReference = 89E1E878303ECF1700B1592C /* JSON Studio.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 89E1E86F303ECF1700B1592C;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				JS0N0003000000000000JK03 /* XCLocalSwiftPackageReference "Packages/JSONKit" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 89E1E879303ECF1700B1592C /* Products */;
 			projectDirPath = "";
@@ -573,6 +582,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		JS0N0003000000000000JK03 /* XCLocalSwiftPackageReference "Packages/JSONKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Packages/JSONKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		JS0N0002000000000000JK02 /* JSONKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = JSONKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 89E1E870303ECF1700B1592C /* Project object */;
 }

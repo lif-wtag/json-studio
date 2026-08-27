@@ -6,19 +6,26 @@ import SwiftUI
 /// static window that matches the Claude Design export; Phase 3b wires the `NSTextView`
 /// editor, Phase 3d the inspector tree, Phase 3c the status bar.
 struct RootWindowView: View {
+    /// The open document. Task 16 gives the panes real content; for now the window proves the
+    /// document actually arrives — its text and detected encoding are shown rather than mocked.
+    @ObservedObject var document: JSONDocument
+
     @State private var showInspector = true
 
     var body: some View {
         HSplitView {
-            EditorPlaceholder()
+            EditorPlaceholder(document: document)
             if showInspector {
-                InspectorPlaceholder()
+                InspectorPlaceholder(document: document)
             }
         }
-        // Phase 1 supplies the real minimum window size from Design/tokens.md.
-        .frame(minWidth: 720, minHeight: 420)
+        .frame(
+            minWidth: Tokens.Layout.windowMinWidth,
+            minHeight: Tokens.Layout.windowMinHeight
+        )
         .toolbar {
-            // Phase 3a: New / Open / Save · Format / Minify · Compare · inspector toggle.
+            // Task 16 builds the real toolbar from the artboard: Format · Minify · Compare
+            // pills, the search field, then this toggle. No New/Open/Save — File menu only.
             ToolbarItem {
                 Button {
                     showInspector.toggle()
@@ -30,26 +37,54 @@ struct RootWindowView: View {
     }
 }
 
+/// Placeholder until Task 19 wraps `NSTextView`. It shows the document's actual text rather than
+/// a caption, so this task's claim — that the document is read, decoded and handed over — is
+/// visible rather than asserted.
 private struct EditorPlaceholder: View {
+    @ObservedObject var document: JSONDocument
+
     var body: some View {
-        Text("Editor — Phase 3b (NSTextView + TextKit 2)")
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            // Editor content is always opaque — never glass (ADR-08).
-            .background(Color(nsColor: .textBackgroundColor))
+        ScrollView {
+            Text(document.text.isEmpty ? "Empty document" : document.text)
+                .font(.system(size: Tokens.Typography.editorBodySize, design: .monospaced))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(Tokens.Spacing.m)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Editor content is always opaque — never glass (ADR-08).
+        .background(Color(nsColor: .textBackgroundColor))
     }
 }
 
+/// Placeholder until Task 25. Reports what the domain makes of the document, which is the other
+/// half of proving the link works: this is JSONKit running inside the app for the first time.
 private struct InspectorPlaceholder: View {
+    @ObservedObject var document: JSONDocument
+
     var body: some View {
-        Text("Inspector — Phase 3d")
-            .foregroundStyle(.secondary)
-            // Minimum inspector width from the build guide (§3d).
-            .frame(minWidth: 240, idealWidth: 300, maxWidth: 420, maxHeight: .infinity)
-            .background(Color(nsColor: .controlBackgroundColor))
+        VStack(alignment: .leading, spacing: Tokens.Spacing.s) {
+            Text("Inspector — Task 25")
+                .font(.headline)
+            Text(document.summary)
+                .font(Tokens.Typography.uiSecondary)
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+            Spacer()
+        }
+        .padding(Tokens.Spacing.m)
+        .frame(
+            minWidth: Tokens.Layout.inspectorMinWidth,
+            idealWidth: Tokens.Layout.inspectorDefaultWidth,
+            maxWidth: Tokens.Layout.inspectorMaxWidth,
+            maxHeight: .infinity,
+            alignment: .leading
+        )
+        // The inspector is dense small text; translucency costs legibility (ADR-08).
+        .background(Color(nsColor: .controlBackgroundColor))
     }
 }
 
 #Preview {
-    RootWindowView()
+    RootWindowView(document: JSONDocument())
 }
