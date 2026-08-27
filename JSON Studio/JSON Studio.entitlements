@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  Phase 0 chose the Mac App Store, sandboxed, so this is load-bearing rather than a formality
+	  and it is set up now rather than at ship time — retrofitting sandbox violations is miserable.
+
+	  Written as a file rather than left to the ENABLE_* build settings so the grants are reviewable
+	  in a diff. A settings-only sandbox is invisible: it produced `user-selected.read-only` on a
+	  document editor, and nothing said so until the built binary was inspected.
+	-->
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+
+	<!--
+	  read-WRITE, not read-only. The app is an editor: it saves, it does Save As, and it exports.
+	  Read-only is what the target was actually shipping before Task 18.
+	-->
+	<key>com.apple.security.files.user-selected.read-write</key>
+	<true/>
+
+	<!--
+	  App-scoped bookmarks. Without this, a sandboxed app's access to a user-selected file dies with
+	  the process, so Open Recent comes back on the next launch as a list of files it cannot open.
+	-->
+	<key>com.apple.security.files.bookmarks.app-scope</key>
+	<true/>
+</dict>
+</plist>
