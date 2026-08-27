@@ -30,6 +30,12 @@ final class JSONDocument: ReferenceFileDocument, ObservableObject {
     /// The in-flight status parse, so a newer edit can cancel an older one.
     private var statusTask: Task<Void, Never>?
 
+    /// The bytes the app last read from, or last wrote to, this document's file (DC-10).
+    ///
+    /// The reference point for telling someone else's write from our own. `nil` for a document
+    /// that has never been on disk, where every byte is unsaved by definition.
+    private(set) var lastKnownFileContents: Data?
+
     /// How the file was encoded when it was opened, so saving preserves it (DC-09). A document
     /// that arrives as UTF-16 and leaves as UTF-8 has been silently rewritten.
     @Published private(set) var encoding: DocumentEncoding
@@ -50,6 +56,7 @@ final class JSONDocument: ReferenceFileDocument, ObservableObject {
         let decoded = try DocumentEncoding.decode(data)
         self.text = decoded.text
         self.encoding = decoded.encoding
+        self.lastKnownFileContents = data
         // `didSet` does not fire during initialisation, so the first status is asked for here.
         scheduleStatusRefresh()
     }
@@ -57,7 +64,12 @@ final class JSONDocument: ReferenceFileDocument, ObservableObject {
     /// A snapshot for autosave. Taken on the main actor while the document is quiescent, then
     /// written on a background queue — which is why it is a value, not a reference to `self`.
     func snapshot(contentType: UTType) throws -> Snapshot {
-        Snapshot(text: text, encoding: encoding)
+        let snapshot = Snapshot(text: text, encoding: encoding)
+        // Recorded here rather than in `fileWrapper`, which runs off the main actor and must not
+        // touch this. The encoding is deterministic, so these are exactly the bytes about to be
+        // written — and recording them is what stops the app's own save raising its own alert.
+        lastKnownFileContents = snapshot.encoding.encode(snapshot.text)
+        return snapshot
     }
 
     func fileWrapper(snapshot: Snapshot, configuration: WriteConfiguration) throws -> FileWrapper {
@@ -94,6 +106,70 @@ extension JSONDocument {
                 self.status = next
             }
         }
+    }
+
+    /// Whether the editor holds something the file on disk does not (DC-10).
+    ///
+    /// Computed rather than tracked: comparing the bytes is exact, where a dirty *flag* has to be
+    /// cleared in every path that writes and is wrong the moment one of them forgets. Only called
+    /// when the alert is about to be shown, so encoding the whole text is not on any hot path.
+    var hasUnsavedChanges: Bool {
+        guard let lastKnownFileContents else { return !text.isEmpty }
+        return encoding.encode(text) != lastKnownFileContents
+    }
+
+    /// Take the version someone else wrote (DC-10).
+    ///
+    /// **The encoding comes with it.** If the other writer saved as UTF-16, keeping our UTF-8 would
+    /// convert the file on the next save — the silent rewrite DC-09 exists to prevent. Both are
+    /// restored together by undo, so "you can undo it" in the alert's copy is true of the whole
+    /// change and not just the text.
+    func reload(from data: Data, undoManager: UndoManager?) {
+        guard let decoded = try? DocumentEncoding.decode(data) else { return }
+        let previousText = text
+        let previousEncoding = encoding
+        let previousContents = lastKnownFileContents
+        guard previousText != decoded.text || previousEncoding != decoded.encoding else { return }
+
+        text = decoded.text
+        encoding = decoded.encoding
+        lastKnownFileContents = data
+
+        undoManager?.registerUndo(withTarget: self) { document in
+            document.restore(
+                text: previousText,
+                encoding: previousEncoding,
+                contents: previousContents,
+                undoManager: undoManager
+            )
+        }
+        undoManager?.setActionName(ExternalChangeCopy.reload)
+    }
+
+    /// Undo's half of `reload(from:)`, re-registering itself so redo works.
+    private func restore(
+        text newText: String,
+        encoding newEncoding: DocumentEncoding,
+        contents: Data?,
+        undoManager: UndoManager?
+    ) {
+        let previousText = text
+        let previousEncoding = encoding
+        let previousContents = lastKnownFileContents
+
+        text = newText
+        encoding = newEncoding
+        lastKnownFileContents = contents
+
+        undoManager?.registerUndo(withTarget: self) { document in
+            document.restore(
+                text: previousText,
+                encoding: previousEncoding,
+                contents: previousContents,
+                undoManager: undoManager
+            )
+        }
+        undoManager?.setActionName(ExternalChangeCopy.reload)
     }
 
     /// Replace the whole text as one undoable operation.

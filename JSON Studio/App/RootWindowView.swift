@@ -21,6 +21,10 @@ struct RootWindowView: View {
     @AppStorage(Preferences.editorFontSize) private var editorFontSize = Preferences.defaultEditorFontSize
 
     @Environment(\.undoManager) private var undoManager
+    @Environment(\.documentConfiguration) private var documentConfiguration
+
+    /// DC-10. One per window, because each window watches its own file.
+    @StateObject private var externalChanges = ExternalChangeMonitor()
 
     /// Per-window, not a preference: closing the inspector in one document must not close it in
     /// the others. The preference only supplies the value a new window starts with.
@@ -60,6 +64,45 @@ struct RootWindowView: View {
             showsInspector = showInspectorInNewWindows
             document.scheduleStatusRefresh()
         }
+        // Starting is idempotent, so re-running it when the document is saved under a new name —
+        // or saved at all — re-points the watch and re-bases what it compares against.
+        .onChange(of: documentConfiguration?.fileURL, initial: true) { _, _ in startWatching() }
+        .onChange(of: document.lastKnownFileContents, initial: false) { _, _ in startWatching() }
+        .alert(
+            ExternalChangeCopy.title(filename: filename),
+            isPresented: Binding(
+                get: { externalChanges.pendingChange != nil },
+                // Dismissed any other way — Escape, or clicking away — counts as keeping.
+                set: { if !$0 { externalChanges.resolvePendingChange() } }
+            )
+        ) {
+            Button(ExternalChangeCopy.reload) {
+                if let data = externalChanges.pendingChange {
+                    document.reload(from: data, undoManager: undoManager)
+                }
+                externalChanges.resolvePendingChange()
+            }
+            // `.cancel` so Escape keeps the developer's work, and neither button is `.destructive`
+            // — the choice is symmetric and both versions survive it.
+            Button(ExternalChangeCopy.keepMyChanges, role: .cancel) {
+                externalChanges.resolvePendingChange()
+            }
+        } message: {
+            Text(ExternalChangeCopy.body(hasUnsavedChanges: document.hasUnsavedChanges))
+        }
+    }
+
+    private func startWatching() {
+        externalChanges.start(
+            url: documentConfiguration?.fileURL,
+            lastKnown: document.lastKnownFileContents
+        )
+    }
+
+    /// The name in the alert's title. An unsaved document has no file to change underneath it, so
+    /// the fallback is only ever seen if one appears between the check and the alert.
+    private var filename: String {
+        documentConfiguration?.fileURL?.lastPathComponent ?? "This document"
     }
 
     /// The one path a verb takes, whether it arrived from the toolbar, the menu bar or a shortcut.
