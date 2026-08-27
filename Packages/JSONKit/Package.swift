@@ -26,14 +26,22 @@ let package = Package(
             name: "JSONKit",
             swiftSettings: strictConcurrency
         ),
+        // The CLI's logic lives in a library target so it can be tested. CI depends on the CLI
+        // (ADR-05: it is the only way the domain is exercisable with no UI), and an executable
+        // target cannot be imported by a test target — so `jsonstudio-cli` is a one-line shim.
+        .target(
+            name: "JSONStudioCLI",
+            dependencies: ["JSONKit"],
+            swiftSettings: strictConcurrency
+        ),
         .executableTarget(
             name: "jsonstudio-cli",
-            dependencies: ["JSONKit"],
+            dependencies: ["JSONStudioCLI"],
             swiftSettings: strictConcurrency
         ),
         .testTarget(
             name: "JSONKitTests",
-            dependencies: ["JSONKit"],
+            dependencies: ["JSONKit", "JSONStudioCLI"],
             // JSONTestSuite corpus and other fixtures live here (Phase 2).
             // Benchmarks/README.md is documentation, not a resource — exclude it so SwiftPM
             // stops warning about an unhandled file.
