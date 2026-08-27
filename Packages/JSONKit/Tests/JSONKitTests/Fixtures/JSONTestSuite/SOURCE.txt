@@ -1,0 +1,12 @@
+JSONTestSuite — Nicolas Seriot's adversarial JSON conformance corpus.
+
+    Upstream:  https://github.com/nst/JSONTestSuite
+    Pinned at: 1ef36fa  (test_parsing/*.json, 318 cases)
+    Licence:   MIT — see LICENSE in this directory
+
+Vendored rather than fetched, deliberately. CI must not depend on the network to know whether the
+parser still conforms, and pinning the corpus means a change in the results is a change in *our*
+code rather than in someone else's repository.
+
+Refresh by re-cloning upstream and copying test_parsing/*.json over these files, then update the
+pinned commit above. Expect the results in JSONTestSuiteTests to be re-checked, not assumed.
