@@ -10,7 +10,7 @@ import Foundation
 /// So the mark has to be remembered rather than discarded: a file that arrived with a BOM is
 /// written back with a BOM, and one that did not, is not. Losing it would silently rewrite a file
 /// some other tool depends on; keeping it in the text would make every such document unparseable.
-enum DocumentEncoding: Sendable, Equatable {
+nonisolated enum DocumentEncoding: Sendable, Equatable {
     case utf8
     case utf8WithBOM
     case utf16LittleEndian

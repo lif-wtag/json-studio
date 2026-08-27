@@ -202,6 +202,28 @@ public enum ParseErrorCopy {
         }
     }
 
+    /// The `{size}` placeholder in `Design/error-copy.md` §Status bar: `512 B`, `3.7 KB`, `3.0 MB`.
+    ///
+    /// It lives here rather than in each surface because the CLI's status line and the app's
+    /// status bar render the *same specified string*, and two implementations of it would drift —
+    /// the fixture is 3,771 bytes, which is `3.7 KB` binary and `3.8 KB` decimal, so the two would
+    /// disagree on the very document every mockup and test uses.
+    ///
+    /// Binary units under decimal labels is what Finder shipped for years and what the artboard's
+    /// `3.7 KB` was measured as. No Foundation here (ADR-05), so the one decimal is arithmetic.
+    public static func byteSize(_ bytes: Int) -> String {
+        guard bytes >= 1024 else { return "\(bytes) B" }
+        let units = ["KB", "MB", "GB", "TB"]
+        var value = Double(bytes) / 1024
+        var index = 0
+        while value >= 1024, index < units.count - 1 {
+            value /= 1024
+            index += 1
+        }
+        let tenths = Int((value * 10).rounded())
+        return "\(tenths / 10).\(tenths % 10) \(units[index])"
+    }
+
     /// `{found}` is capped so an error message can't be swamped by a 4 KB run of garbage.
     /// `Design/error-copy.md` fixes the limit at 24 characters.
     static func truncate(_ s: String, limit: Int = 24) -> String {

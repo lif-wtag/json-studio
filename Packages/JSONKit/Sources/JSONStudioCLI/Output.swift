@@ -5,13 +5,13 @@ import JSONKit
 /// line — comes from `ParseErrorCopy`; this file only arranges it.
 public enum Output {
 
-    /// `3.7 KB`, matching the `{size}` placeholder in `Design/error-copy.md` §Status bar.
+    /// `3.7 KB`, the `{size}` placeholder in `Design/error-copy.md` §Status bar.
+    ///
+    /// Delegates rather than reimplements: the app's status bar renders the same specified string,
+    /// and the fixture is 3,771 bytes — `3.7 KB` binary, `3.8 KB` decimal — so two implementations
+    /// would disagree on the one document every mockup and test uses.
     public static func byteSize(_ bytes: Int) -> String {
-        if bytes < 1024 { return "\(bytes) B" }
-        let units = ["KB", "MB", "GB"]
-        var value = Double(bytes) / 1024, index = 0
-        while value >= 1024 && index < units.count - 1 { value /= 1024; index += 1 }
-        return String(format: "%.1f %@", value, units[index])
+        ParseErrorCopy.byteSize(bytes)
     }
 
     public static func name(of encoding: String.Encoding) -> String {

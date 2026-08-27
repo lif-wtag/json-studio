@@ -128,8 +128,13 @@ struct JSONDocumentTests {
         #expect(document.encoding == .utf8)
     }
 
-    @Test("the domain runs inside the app — the whole point of this task")
-    func domainIsLinked() throws {
+    // Task 15 asserted these three through `JSONDocument.summary`, a synchronous parse on the
+    // main thread. Task 16 replaced it with `status`, published off the main actor — so the same
+    // three properties are asserted through the new surface rather than dropped with the old one.
+
+    @Test("the domain runs inside the app — the whole point of Task 15")
+    @MainActor
+    func domainIsLinked() async throws {
         let document = JSONDocument()
         document.text = try String(
             contentsOf: URL(fileURLWithPath: #filePath)
@@ -137,22 +142,45 @@ struct JSONDocumentTests {
                 .appendingPathComponent("Design/sample-payload.json"),
             encoding: .utf8
         )
-        // Reuses ParseErrorCopy's exact wording, and the design's own figure.
-        #expect(document.summary.hasPrefix("Valid JSON · 119 properties"))
-        #expect(document.summary.contains("max depth   7"))
+        let status = try await settledStatus(of: document) { $0.validity == .valid }
+        // The design's own figures, rendered in the status bar and the Structure header.
+        #expect(status.statistics?.properties == 119)
+        #expect(status.statistics?.maxDepth == 7)
     }
 
-    @Test("an invalid document reports the CAUSE, using the copy verbatim")
-    func reportsTheCause() {
+    @Test("an invalid document reports the CAUSE line, not the detection line")
+    @MainActor
+    func reportsTheCause() async throws {
         let document = JSONDocument()
         document.text = "{\n  \"a\": 1\n  \"b\": 2\n}"
-        // The comma belongs at the end of line 2; the parser only noticed on line 3.
-        #expect(document.summary.contains("line 2: Add a comma after this value."))
-        #expect(document.summary.contains("The next property starts on line 3 without one."))
+        // The comma belongs at the end of line 2; the parser only noticed on line 3. Every tool
+        // surveyed in Phase 0 reports line 3, which is the whole reason this project exists.
+        let status = try await settledStatus(of: document) {
+            if case .invalid = $0.validity { return true } else { return false }
+        }
+        guard case .invalid(_, let line, _) = status.validity else { return }
+        #expect(line == 2)
     }
 
-    @Test("an empty document says so rather than reporting an error")
+    @Test("an empty document is not an error")
+    @MainActor
     func emptyDocument() {
-        #expect(JSONDocument().summary == ParseErrorCopy.emptyDocument)
+        #expect(JSONDocument().status.validity == .empty)
+    }
+
+    /// Wait for the document's off-main status parse to land. Polling rather than a Combine
+    /// expectation because the point is that the value *arrives* on the main actor, which is
+    /// exactly what reading it in a loop checks.
+    @MainActor
+    private func settledStatus(
+        of document: JSONDocument,
+        satisfies predicate: (DocumentStatus) -> Bool
+    ) async throws -> DocumentStatus {
+        for _ in 0..<300 {
+            if predicate(document.status) { return document.status }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        Issue.record("the status never settled; last was \(document.status.validity)")
+        return document.status
     }
 }
