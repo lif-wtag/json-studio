@@ -20,7 +20,15 @@ import UniformTypeIdentifiers
 final class JSONDocument: ReferenceFileDocument, ObservableObject {
 
     /// The document's text. The single source of truth; the parse tree is derived from it.
-    @Published var text: String
+    @Published var text: String {
+        didSet { scheduleStatusRefresh() }
+    }
+
+    /// What the status bar reports (SH-04). Recomputed off the main actor whenever `text` changes.
+    @Published private(set) var status: DocumentStatus = .empty
+
+    /// The in-flight status parse, so a newer edit can cancel an older one.
+    private var statusTask: Task<Void, Never>?
 
     /// How the file was encoded when it was opened, so saving preserves it (DC-09). A document
     /// that arrives as UTF-16 and leaves as UTF-8 has been silently rewritten.
@@ -42,6 +50,8 @@ final class JSONDocument: ReferenceFileDocument, ObservableObject {
         let decoded = try DocumentEncoding.decode(data)
         self.text = decoded.text
         self.encoding = decoded.encoding
+        // `didSet` does not fire during initialisation, so the first status is asked for here.
+        scheduleStatusRefresh()
     }
 
     /// A snapshot for autosave. Taken on the main actor while the document is quiescent, then
@@ -61,39 +71,72 @@ final class JSONDocument: ReferenceFileDocument, ObservableObject {
 }
 
 extension JSONDocument {
-    /// What the domain makes of the current text. Task 23 replaces this with a debounced,
-    /// cancellable, off-main parse (`ParseCoordinator`); parsing on demand here would stall the
-    /// main thread on a large document, so this is deliberately temporary.
+
+    /// Recompute `status` off the main actor, cancelling any parse a newer edit has superseded.
     ///
-    /// It exists at all because it is the only way to *show* that JSONKit is now running inside
-    /// the app rather than assert it.
-    var summary: String {
+    /// **This is not `ParseCoordinator`.** Task 23 owns that: a 150 ms debounce, and publication
+    /// of the partial tree and the errors so the editor can underline them. This does neither. It
+    /// exists because the status bar must report the document rather than a mock, and parsing on
+    /// the main thread to do so would blow the 0 ms budget on any document worth opening — a
+    /// 528 KB payload takes tens of milliseconds, which is several dropped frames per keystroke.
+    func scheduleStatusRefresh() {
+        statusTask?.cancel()
+        let text = self.text
+        let encoding = self.encoding
+
+        statusTask = Task { [weak self] in
+            let next = await Task.detached(priority: .userInitiated) {
+                DocumentStatus.make(text: text, encoding: encoding)
+            }.value
+            guard !Task.isCancelled else { return }
+            await MainActor.run { [weak self] in
+                guard let self, self.status != next else { return }
+                self.status = next
+            }
+        }
+    }
+
+    /// Replace the whole text as one undoable operation.
+    ///
+    /// Registering the undo is what marks the document edited — `ReferenceFileDocument` takes its
+    /// dirty state from the undo manager, so a mutation that skipped this would change the
+    /// document without the close-confirmation, the edited dot or autosave noticing.
+    ///
+    /// The undo re-registers itself, which is what makes redo work: undoing a Format puts the
+    /// original back *and* registers putting the formatted text back again.
+    func replaceText(with newText: String, undoManager: UndoManager?, actionName: String) {
+        let previous = text
+        guard previous != newText else { return }
+        text = newText
+        undoManager?.registerUndo(withTarget: self) { document in
+            document.replaceText(with: previous, undoManager: undoManager, actionName: actionName)
+        }
+        undoManager?.setActionName(actionName)
+    }
+
+    /// Run one of the toolbar verbs. The menu bar (Task 17) calls the same method, so the two
+    /// cannot diverge; the compare window is Task 27 and is refused rather than faked.
+    func perform(
+        _ command: DocumentCommand,
+        indent: FormatOptions.Indent,
+        undoManager: UndoManager?
+    ) {
+        // Formatting a recovered tree would emit valid JSON that differs from what was written.
+        // The toolbar disables these; this guard is the one that actually holds, since a menu
+        // item or a shortcut can reach here by another route.
+        guard status.isFormattable else { return }
+
+        let options: FormatOptions
+        switch command {
+        case .format: options = FormatOptions(indent: indent)
+        case .minify: options = .minified
+        case .compare: return
+        }
+
         let result = Parser().parse(text)
-        guard !result.isEmpty else { return ParseErrorCopy.emptyDocument }
-
-        if let tree = result.tree, result.errors.isEmpty,
-           let statistics = try? StatisticsWalker().walk(tree) {
-            return """
-                \(ParseErrorCopy.statusSummary(errorCount: 0, properties: statistics.properties))
-                \(encoding.label)
-
-                objects     \(statistics.objects)
-                arrays      \(statistics.arrays)
-                properties  \(statistics.properties)
-                max depth   \(statistics.maxDepth)
-                """
-        }
-
-        let first = result.errors.first.map { result.lineIndex.position(at: $0.span.start) }
-        var lines = [ParseErrorCopy.statusSummary(
-            errorCount: result.errors.count, firstLine: first?.line, firstColumn: first?.column
-        ), encoding.label, ""]
-        // The cause, not the detection point — the copy comes from ParseErrorCopy verbatim.
-        for error in result.errors.prefix(5) {
-            let position = result.lineIndex.position(at: error.span.start)
-            lines.append("line \(position.line): \(error.copy.title)")
-            lines.append("    \(error.copy.body)")
-        }
-        return lines.joined(separator: "\n")
+        // Formatted against the source it was parsed from — the formatter re-emits scalars by
+        // slicing their spans, which is what keeps `\u00e9` and `9007199254740993` byte-exact.
+        guard let formatted = Formatter(options: options).format(result, source: text) else { return }
+        replaceText(with: formatted, undoManager: undoManager, actionName: command.menuTitle)
     }
 }

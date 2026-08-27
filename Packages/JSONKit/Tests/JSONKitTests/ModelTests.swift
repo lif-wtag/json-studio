@@ -357,6 +357,22 @@ struct ParseErrorTests {
                 == "9 errors · first on line 29")
     }
 
+    @Test("byte size renders the {size} placeholder the status bar and the CLI both use")
+    func byteSize() {
+        // Binary units under decimal labels — what the artboard's `3.7 KB` was measured as. The
+        // fixture is 3,771 bytes, which is 3.7 KB binary and 3.8 KB decimal, so getting this wrong
+        // makes the app and the CLI disagree about the one document every mockup uses.
+        #expect(ParseErrorCopy.byteSize(3771) == "3.7 KB")
+        #expect(ParseErrorCopy.byteSize(0) == "0 B")
+        #expect(ParseErrorCopy.byteSize(1) == "1 B")
+        #expect(ParseErrorCopy.byteSize(1023) == "1023 B")
+        #expect(ParseErrorCopy.byteSize(1024) == "1.0 KB")
+        #expect(ParseErrorCopy.byteSize(1024 * 1024 * 3) == "3.0 MB")
+        #expect(ParseErrorCopy.byteSize(1024 * 1024 * 1024) == "1.0 GB")
+        // The largest unit saturates rather than inventing a PB label.
+        #expect(ParseErrorCopy.byteSize(1024 * 1024 * 1024 * 1024 * 2) == "2.0 TB")
+    }
+
     @Test("control characters are named, never rendered")
     func controlCharacterNames() {
         #expect(ParseErrorCopy.characterName(forUTF16: 0x0009) == (name: "tab", escape: "\\t"))
